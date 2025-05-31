@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Scripts/Editor/Style/BehaviourTreeEditor.uss?fileID=7433441132597879392&amp;guid=c00d2fa709faeee4baa9fac725489c2b&amp;type=3#BehaviourTreeEditor" />
+    <SplitView fixed-pane-initial-dimension="211.8">
+        <ui:VisualElement name="left-panel" style="flex-grow: 1; flex-shrink: 1; width: 303px; opacity: 1; height: 664px; flex-basis: initial;">
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; width: 209px; height: initial; overflow: visible; opacity: 1; display: flex;">
+                <uie:Toolbar style="width: 211px;">
+                    <uie:ToolbarMenu display-tooltip-when-elided="true" text="Assets " />
+                </uie:Toolbar>
+                <InspectorView name="inspector-view" style="height: 390px; flex-grow: 1; width: 286px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="right-panel" style="flex-shrink: 1; width: 639px; height: 655px;">
+            <BehaviourTreeView focusable="true" style="flex-grow: 1; height: 661px; width: 956px; align-items: stretch; flex-direction: column-reverse; align-self: flex-start;" />
+        </ui:VisualElement>
+    </SplitView>
+</ui:UXML>

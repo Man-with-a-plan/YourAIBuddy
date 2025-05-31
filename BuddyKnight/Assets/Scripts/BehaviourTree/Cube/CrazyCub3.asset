@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8418135595673284505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa00d23b2e0267e44b4cf218c01502e0, type: 3}
+  m_Name: RandDest
+  m_EditorClassIdentifier: 
+  GenUniqueId: 9e822e0270d3e994688dacb393a35f4b
+  Position: {x: 225, y: 4.6774955}
+  radius: 50
+  maxError: 3
+--- !u!114 &-7462259245247141135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be7c26ee8b1124ad18e54145d9a76f35, type: 3}
+  m_Name: RootNode
+  m_EditorClassIdentifier: 
+  GenUniqueId: 794053512e41c4f4d8b9e62b383005db
+  Position: {x: 93.55001, y: -293.776}
+  Child: {fileID: 5462865981714727945}
+--- !u!114 &-2549914135657580832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d63a60094f2845459be0909703ce367, type: 3}
+  m_Name: SequenceNode
+  m_EditorClassIdentifier: 
+  GenUniqueId: 813bd766a4d19c74bb34b649eb5ea39c
+  Position: {x: -35, y: -51}
+  Children: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4942b6595e2a3481a9d1a087badfd06c, type: 3}
+  m_Name: CrazyCub3
+  m_EditorClassIdentifier: 
+  RootNode: {fileID: -7462259245247141135}
+  TreeState: 0
+  Nodes:
+  - {fileID: -7462259245247141135}
+  - {fileID: 982007755718088870}
+  - {fileID: -8418135595673284505}
+  - {fileID: 5462865981714727945}
+--- !u!114 &982007755718088870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8c200c1410c7524c874f184fab158fb, type: 3}
+  m_Name: IsClose
+  m_EditorClassIdentifier: 
+  GenUniqueId: 3297554eb4611814bb7d45b306798983
+  Position: {x: -117.000015, y: 26.850012}
+  distanceThresh: 0.001
+--- !u!114 &5462865981714727945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d63a60094f2845459be0909703ce367, type: 3}
+  m_Name: SequenceNode
+  m_EditorClassIdentifier: 
+  GenUniqueId: ea36e17b1031c0441b6a79bcb4985007
+  Position: {x: 93, y: -107}
+  Children:
+  - {fileID: 982007755718088870}
+  - {fileID: -8418135595673284505}

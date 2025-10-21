@@ -1,46 +1,42 @@
 using UnityEngine;
 
-
 public class IsFriendClose : ActionNode
 {
     [SerializeField] private float distanceThresh = 3f;
-    private Transform playerTransform;
 
     protected override void OnStart(BehaviourTreeState state)
     {
-        // Find target by tag once at start
-        if (playerTransform == null)
+        // You could optionally assign the playerTransform here,
+        // but only if it hasn't been set already (i.e., first time).
+        if (state.PlayerTransform == null)
         {
             GameObject target = GameObject.FindGameObjectWithTag("Player");
             if (target != null)
             {
-                playerTransform = target.transform;
+                state.PlayerTransform = target.transform;
             }
         }
     }
+
     protected override void OnStop(BehaviourTreeState state)
     {
     }
+
     protected override State OnUpdate(BehaviourTreeState state)
     {
-        if (playerTransform == null)
+        if (state.PlayerTransform == null)
         {
             return State.Failure;
         }
 
-        float dist = Vector3.Distance(state.Owner.transform.position, playerTransform.position);
+        float dist = Vector3.Distance(state.Owner.transform.position, state.PlayerTransform.position);
 
         if (dist <= distanceThresh)
         {
-            Debug.Log("stop, oaaaaaaaaa");
+            state.Owner.NavMeshAgent.ResetPath();
             return State.Success;
         }
 
-        return State.Running;
-
+        return State.Failure;
     }
-
-       
-
-
 }

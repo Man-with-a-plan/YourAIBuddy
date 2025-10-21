@@ -17,10 +17,13 @@ public class RandDest : ActionNode
     }
     protected override State OnUpdate(BehaviourTreeState state)
     {
-      
+       
+
         if (state.Owner.NavMeshAgent == null || !state.Owner.NavMeshAgent.enabled)
         {
+            Debug.Log("fail");
             return State.Failure;
+         
         }
 
         var randomDirection = Random.insideUnitSphere * radius;
@@ -35,7 +38,7 @@ public class RandDest : ActionNode
         {
             position = hit.position;
             state.Owner.NavMeshAgent.SetDestination(hit.position);
-        
+            Debug.Log("Dest is set");
             return State.Success;
 
         }

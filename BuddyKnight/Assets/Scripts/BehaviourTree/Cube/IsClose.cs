@@ -17,9 +17,10 @@ using UnityEngine;
     }
     protected override State OnUpdate(BehaviourTreeState state)
     {
+      
         if(state.Owner.NavMeshAgent == null || !state.Owner.NavMeshAgent.enabled)
         {
-           
+            Debug.Log("fail");
             return State.Failure;
         }
 
@@ -29,8 +30,10 @@ using UnityEngine;
 
         if(distance <= distanceThresh)
         {
-          // Debug.Log("Reach for dat peach");
+            Debug.Log("he is close");
+            // Debug.Log("Reach for dat peach");
             return State.Success;
+           
 
         }
 

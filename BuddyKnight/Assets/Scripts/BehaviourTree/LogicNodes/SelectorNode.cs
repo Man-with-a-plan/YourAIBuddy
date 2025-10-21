@@ -15,7 +15,8 @@ public class SelectorNode : CompositeNode
 
     protected override void OnStop(BehaviourTreeState state)
     {
-        // Optional cleanup
+        var data = state.GetNodeData(this) as SelectorNodeData;
+        data.CurrentChildIndex = 0;
     }
 
     protected override State OnUpdate(BehaviourTreeState state)
@@ -33,6 +34,7 @@ public class SelectorNode : CompositeNode
                     return State.Running;
 
                 case State.Success:
+                    data.CurrentChildIndex = 0;
                     return State.Success;
 
                 case State.Failure:

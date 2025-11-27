@@ -49,6 +49,10 @@ namespace StarterAssets
         public float FallTimeout = 0.15f;
 
         [Header("Player Grounded")]
+
+        [Tooltip("Can he climb right now?")]
+        public bool CanClimb = false;
+
         [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
         public bool Grounded = true;
 
@@ -182,19 +186,29 @@ namespace StarterAssets
 
         private void GroundedCheck()
         {
-            // set sphere position, with offset
-            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
-                transform.position.z);
-            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
-                QueryTriggerInteraction.Ignore);
-
-            // update animator if using character
-            if (_hasAnimator)
+            if (!isClimbingLadder)
             {
-                _animator.SetBool(_animIDGrounded, Grounded);
+                // set sphere position, with offset
+                Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
+                    transform.position.z);
+                Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
+                    QueryTriggerInteraction.Ignore);
+                // update animator if using character
+                if (_hasAnimator)
+                {
+                    _animator.SetBool(_animIDGrounded, Grounded);
+                }
             }
-        }
+            else
+            {
+                if (_hasAnimator)
+                {
+                    _animator.SetBool(_animIDGrounded, true);
+                }
+            }
 
+        }
+       
         private void CameraRotation()
         {
             // if there is an input and camera position is not fixed
@@ -216,10 +230,18 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
+        public void foundAxes()
+        {
+            CanClimb = true;
+        }
+
         private void GrabLadder(Vector3 lastGrabLadderDirection)
         {
-            isClimbingLadder = true;
-            this.lastGrabLadderDirection = lastGrabLadderDirection;
+            if (CanClimb == true)
+            {
+                isClimbingLadder = true;
+                this.lastGrabLadderDirection = lastGrabLadderDirection;
+            }
                 
         }
 
@@ -276,6 +298,7 @@ namespace StarterAssets
 
             Debug.DrawRay(transform.position + Vector3.up, targetDirection * .4f, Color.red);
 
+            //Code for grabbing
             if (!isClimbingLadder)
             {
                if(Input.GetKeyDown(KeyCode.E)) {
@@ -294,25 +317,27 @@ namespace StarterAssets
                             Transform transform = hitObject.GetComponent<Transform>();
                             _climbingNowThisLadder = transform;
 
-                            
+
                             GrabLadder(targetDirection);
 
                         }
                     }
                     }
                 }
+            //Code for holding onto ladder and letting go
                 else
                 {
                     float avoidFloor = 0.1f;
-                    float ladderGrabDist = .4f;
+                    float ladderGrabDist = 3f;
                 
                 Vector3 toCenter = (_climbingNowThisLadder.position - transform.position).normalized;
 
                 toCenter.y = 0;
-                Debug.DrawRay(transform.position + Vector3.up, lastGrabLadderDirection * .4f, Color.blue);
+                
 
                 lastGrabLadderDirection = toCenter;
-
+                Debug.DrawRay(transform.position + Vector3.up, lastGrabLadderDirection * .4f, Color.blue);
+                //Drop ladder if the player reached the top
                 if (Physics.Raycast(transform.position + Vector3.up * avoidFloor, lastGrabLadderDirection, out RaycastHit raycastHit, ladderGrabDist))
                     {
 
@@ -326,19 +351,26 @@ namespace StarterAssets
                         }
                     Debug.Log(isClimbingLadder);
 
-                }
+                    }
                     else
                     {
                         DropLadder();
                         _verticalVelocity = 4f;
-                    Debug.Log("ladder is dropped with no reason");
+                    Debug.Log("ladder is dropped for no reason");
                     }
 
-                    if ((Vector3.Dot(targetDirection, lastGrabLadderDirection) < 0))
+
+
+
+                //Reach the ground - drop the ladder
+
+
+
+                    if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
                     {
                     
-                    float ladderFloorDropDist = .5f;
-             
+                    float ladderFloorDropDist = .1f;
+                    Debug.Log("Its going down i shouting timber");
 
                     if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit floorRaycastHit, ladderFloorDropDist))
                         {
@@ -347,7 +379,16 @@ namespace StarterAssets
                         }
 
                     }
+                    //Drop the ladder if too hot
+                    if(CanClimb == false)
+                {
+                    DropLadder();
+                    Debug.Log("too hot to climb");
                 }
+                }
+
+
+            //Change moveset if is climbing
 
                 if (isClimbingLadder)
                 {
@@ -391,6 +432,7 @@ namespace StarterAssets
             // if there is a move input rotate player when the player is moving
             if (_input.move != Vector2.zero)
             {
+                //Sideways moveset
 
                 if (isClimbingLadder)
                 {
@@ -470,12 +512,20 @@ namespace StarterAssets
                 // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
+                    //Jump from one ladder to another
+                    if(isClimbingLadder == true) {
+                        _verticalVelocity = _verticalVelocity * 2;
+                        isClimbingLadder = false;
+                    }
+                    
+
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 
                     // update animator if using character
                     if (_hasAnimator)
                     {
+
                         _animator.SetBool(_animIDJump, true);
                     }
                 }
@@ -483,6 +533,7 @@ namespace StarterAssets
                 // jump timeout
                 if (_jumpTimeoutDelta >= 0.0f)
                 {
+
                     _jumpTimeoutDelta -= Time.deltaTime;
                 }
             }

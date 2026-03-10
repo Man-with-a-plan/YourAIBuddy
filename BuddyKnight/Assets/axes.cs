@@ -10,14 +10,20 @@ public class axes : MonoBehaviour
     {
         foundAthing.AddListener(GameObject.FindGameObjectWithTag("Player").GetComponent<ThirdPersonController>().foundAxes);
     }
+    private Vector3 GetClosestPoint(Collider collider, Vector3 positionToCheck)
+    {
+        return collider.ClosestPoint(positionToCheck);
+    }
     private void OnTriggerStay(Collider collision)
     {
+        
         if (collision.CompareTag("Player") & Input.GetKey(KeyCode.R ))
         {
             
             foundAthing.Invoke();
             Destroy(gameObject);
         }
+      
     }
 
 

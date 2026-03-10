@@ -105,6 +105,8 @@ namespace StarterAssets
         private int _animIDJump;
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
+        private int _animIDClimbing;
+        private int _animIDFellDown;
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -182,6 +184,8 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+            _animIDClimbing = Animator.StringToHash("Climbing");
+            _animIDFellDown = Animator.StringToHash("FellDown");
         }
 
         private void GroundedCheck()
@@ -241,6 +245,9 @@ namespace StarterAssets
             {
                 isClimbingLadder = true;
                 this.lastGrabLadderDirection = lastGrabLadderDirection;
+                
+                _animator.SetBool(_animIDClimbing, isClimbingLadder);
+                
             }
                 
         }
@@ -248,6 +255,7 @@ namespace StarterAssets
         private void DropLadder()
         {
             isClimbingLadder = false;
+            _animator.SetBool(_animIDClimbing, isClimbingLadder);
         }
 
         private void Move()
@@ -298,26 +306,21 @@ namespace StarterAssets
 
             Debug.DrawRay(transform.position + Vector3.up, targetDirection * .4f, Color.red);
 
-            //Code for grabbing
+            //Code for attatching to a ladder. No IK. 
             if (!isClimbingLadder)
             {
                if(Input.GetKeyDown(KeyCode.E)) {
                     float avoidFloor = 0.1f;
-                    float ladderGrabDist = .4f;
-                  
-                    if (Physics.Raycast(transform.position + Vector3.up * avoidFloor, targetDirection, out RaycastHit raycastHit, ladderGrabDist))
+                    float ladderGrabDist = .5f;
+                    if (Physics.Raycast(transform.position + Vector3.up * avoidFloor, targetDirection,
+                        out RaycastHit raycastHit, ladderGrabDist))
                     {
                         if (raycastHit.transform.TryGetComponent(out Ladder ladder))
                         {
-                            
-
                             GameObject hitObject = raycastHit.collider.gameObject;
-
                             // 2. Get a specific component from it (e.g., MyCustomComponent)
                             Transform transform = hitObject.GetComponent<Transform>();
                             _climbingNowThisLadder = transform;
-
-
                             GrabLadder(targetDirection);
 
                         }
@@ -440,10 +443,10 @@ namespace StarterAssets
                     Vector3 directionToCenter = _climbingNowThisLadder.position - transform.position;
                     directionToCenter.y = 0;
 
-                    // Определяем вектор вдоль "плоскости колонны" для поворота влево/вправо
+      
                     Vector3 sideways = Vector3.Cross(Vector3.up, directionToCenter).normalized;
 
-                    // Смещаем целевое направление в зависимости от ввода
+              
                     Vector3 desiredDirection =  sideways * inputDirection.x;
                     Debug.DrawRay(transform.position, desiredDirection, Color.yellow);
                     Quaternion targetRotation = Quaternion.LookRotation(directionToCenter.normalized);
@@ -516,6 +519,7 @@ namespace StarterAssets
                     if(isClimbingLadder == true) {
                         _verticalVelocity = _verticalVelocity * 2;
                         isClimbingLadder = false;
+                        _animator.SetBool(_animIDClimbing, false);
                     }
                     
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using Unity.VisualScripting;
+using System.Collections;
 public abstract class StateManager<EState> : MonoBehaviour where EState : Enum
 {
     protected Dictionary<EState, BaseState<EState>> States = new Dictionary<EState, BaseState<EState>>();
@@ -49,4 +50,5 @@ public abstract class StateManager<EState> : MonoBehaviour where EState : Enum
     {
         CurrentState.OnTriggerExit(other);
     }
+    
 }

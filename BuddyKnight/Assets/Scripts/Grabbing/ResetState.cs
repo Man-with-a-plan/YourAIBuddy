@@ -21,6 +21,7 @@ public class ResetState:GrabbingState
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
+        return GrabbingStateMachine.EGrabbingState.Search;
         return StateKey;
       
     }
@@ -37,4 +38,5 @@ public class ResetState:GrabbingState
     {
 
     }
+   
 }

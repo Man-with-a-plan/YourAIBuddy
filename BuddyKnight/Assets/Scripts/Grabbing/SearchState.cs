@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class SearchState:GrabbingState
@@ -9,7 +10,8 @@ public class SearchState:GrabbingState
     public override void EnterState()
     {
         Debug.Log("SearchIsentered");
-       
+        Context.CurrenBodySide = GrabbingContext.EBodySide.Top;
+        Context.LegCollider.enabled = false;
     }
 
     public override void ExitState()
@@ -18,8 +20,10 @@ public class SearchState:GrabbingState
     }
     public override void UpdateState()
     {
+        
+
         UpdateIkTargetPositionTracking();
-        Debug.Log("SearchIsUpdating");
+
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
@@ -28,14 +32,14 @@ public class SearchState:GrabbingState
 
     public override void OnTriggerEnter(Collider other)
     {
-        
-       
-        if(other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
-            {
-            Debug.Log("maybe they just don't see?");
-            UpdateGrabbablePoints(other.gameObject, true);
-          
+        Debug.Log("SearchState: TriggerEnter" + other.name + Context.CurrenBodySide);
+        if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
+        {
+           
+            ColliderSwitcheroo(other, true);
+
         }
+       
     }
     public override void OnTriggerStay(Collider other)
     {
@@ -43,9 +47,34 @@ public class SearchState:GrabbingState
     }
     public override void OnTriggerExit(Collider other)
     {
+       Debug.Log("SearchState: TriggerExit");
         if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
         {
-            UpdateGrabbablePoints(other.gameObject, false);
+            
+           ColliderSwitcheroo(other, false);
         }
     }
+    private void ColliderSwitcheroo(Collider other, bool shouldAdd)
+    {
+      if(  UpdateGrabbablePoints(other.gameObject, Context.CurrenBodySide, shouldAdd))
+        {
+            if (Context.CurrenBodySide == GrabbingContext.EBodySide.Top)
+            {
+                Context.ArmCollider.enabled = false;
+                Context.LegCollider.enabled = true;
+                Context.CurrenBodySide = GrabbingContext.EBodySide.Bottom;
+            }
+            else
+            {
+                Context.LegCollider.enabled = false;
+                Context.ArmCollider.enabled = true;
+            
+                Context.CurrenBodySide = GrabbingContext.EBodySide.Top;
+            }
+        }
+       
+
+        
+    }
+ 
 }

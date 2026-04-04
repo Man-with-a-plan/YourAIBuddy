@@ -16,6 +16,7 @@ namespace StarterAssets
 #endif
     public class ThirdPersonController : MonoBehaviour
     {
+        
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
         public float MoveSpeed = 2.0f;
@@ -29,7 +30,7 @@ namespace StarterAssets
 
         [Tooltip("Acceleration and deceleration")]
         public float SpeedChangeRate = 10.0f;
-
+      
         public AudioClip LandingAudioClip;
         public AudioClip[] FootstepAudioClips;
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
@@ -81,6 +82,7 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [SerializeField]  GrabbingStateMachine ContextOfLimbPositions;
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -401,10 +403,17 @@ namespace StarterAssets
                     _verticalVelocity = 0f;
                     Grounded = true;
                     _speed = targetSpeed;
+                for (int i = 0; i < ContextOfLimbPositions.CurrentlyGrabbing.Count; i++)
+                {
+                    Debug.DrawRay(ContextOfLimbPositions.CurrentlyGrabbing[i].transform.position, Vector3.up * .4f, Color.cyan);
+                }
+                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing[0].transform.position - ContextOfLimbPositions.CurrentlyGrabbing[1].transform.position;
+                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing[1].transform.position - ContextOfLimbPositions.CurrentlyGrabbing[2].transform.position;
+                Vector3 toCenter = Vector3.Cross(vector2, vector1);
+              
 
-                Vector3 toCenter = (_climbingNowThisLadder.position - transform.position).normalized;
 
-
+                // (_climbingNowThisLadder.position - transform.position).normalized
 
                 Vector3 tangentDirection = Vector3.Cross(Vector3.up, toCenter); // Move around cylinder
 
@@ -461,7 +470,7 @@ namespace StarterAssets
                         );
                     }
 
-                    Debug.Log("rotating");
+                   //Debug.Log("rotating");
 
 
 

@@ -18,6 +18,8 @@ public abstract class BaseState<EState> where EState : Enum
     public abstract void OnTriggerEnter(Collider other);
     public abstract void OnTriggerStay(Collider other);
     public abstract void OnTriggerExit(Collider other);
-   
+
+    
+
 
 }

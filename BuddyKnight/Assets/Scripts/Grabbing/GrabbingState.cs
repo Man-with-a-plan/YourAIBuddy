@@ -28,7 +28,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         else if(!shouldAdd)
         {
             DeleteFromList(grabPoint, side);
-            Debug.Log("after deleted"+Context.GrabPointsTop.Count);
+         
            return true;
 
         }

@@ -13,7 +13,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     }
 
     private GrabbingContext _context;
-    public List<GameObject> CurrentlyGrabbing => _context.CurrentlyGrabbing;
+    public Dictionary<string, GameObject> CurrentlyGrabbing => _context.CurrentlyGrabbing;
 
     [SerializeField] private TwoBoneIKConstraint _leftIkConstraint;
    [SerializeField] private TwoBoneIKConstraint _rightIkConstraint;

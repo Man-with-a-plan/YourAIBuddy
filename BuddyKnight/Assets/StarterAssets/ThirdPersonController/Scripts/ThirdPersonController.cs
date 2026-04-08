@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -83,6 +84,7 @@ namespace StarterAssets
         public bool LockCameraPosition = false;
 
         [SerializeField]  GrabbingStateMachine ContextOfLimbPositions;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -403,12 +405,12 @@ namespace StarterAssets
                     _verticalVelocity = 0f;
                     Grounded = true;
                     _speed = targetSpeed;
-                for (int i = 0; i < ContextOfLimbPositions.CurrentlyGrabbing.Count; i++)
+                foreach(var key in ContextOfLimbPositions.CurrentlyGrabbing.Values)
                 {
-                    Debug.DrawRay(ContextOfLimbPositions.CurrentlyGrabbing[i].transform.position, Vector3.up * .4f, Color.cyan);
+                    Debug.DrawRay(key.transform.position, Vector3.up * .4f, Color.cyan);
                 }
-                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing[0].transform.position - ContextOfLimbPositions.CurrentlyGrabbing[1].transform.position;
-                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing[1].transform.position - ContextOfLimbPositions.CurrentlyGrabbing[2].transform.position;
+                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
                 Vector3 toCenter = Vector3.Cross(vector2, vector1);
               
 

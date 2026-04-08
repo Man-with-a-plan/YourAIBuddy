@@ -32,7 +32,7 @@ public class SearchState:GrabbingState
 
     public override void OnTriggerEnter(Collider other)
     {
-        Debug.Log("SearchState: TriggerEnter" + other.name + Context.CurrenBodySide);
+       // Debug.Log("SearchState: TriggerEnter" + other.name + Context.CurrenBodySide);
         if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
         {
            
@@ -47,7 +47,7 @@ public class SearchState:GrabbingState
     }
     public override void OnTriggerExit(Collider other)
     {
-       Debug.Log("SearchState: TriggerExit");
+      
         if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
         {
             

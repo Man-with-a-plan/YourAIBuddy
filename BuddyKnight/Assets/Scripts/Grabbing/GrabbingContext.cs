@@ -58,7 +58,7 @@ public class GrabbingContext
     public List<GameObject> GrabPointsTop { get; private set; } = new List<GameObject>();
     public List<GameObject> GrabPointsBottom { get; private set; } = new List<GameObject>();
     //List of game objects that character is currently grabbing. Later will be used to defy his rotation in ThirdPersonController
-    public List<GameObject> CurrentlyGrabbing = new List<GameObject>();
+    public Dictionary<string, GameObject> CurrentlyGrabbing = new Dictionary<string, GameObject>();
 
 
     //to debug which grab point is being grabbed
@@ -85,7 +85,7 @@ public class GrabbingContext
             rightHandGrab = GrabPointsTop[0];
             float distanceToCheck = float.MaxValue;
 
-            CurrentlyGrabbing.Clear();
+           
 
             for (int i = 0; i < GrabPointsTop.Count; i++)
             {
@@ -97,7 +97,7 @@ public class GrabbingContext
             }
             //to indicate which is the closest to the left hand
             FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
-            CurrentlyGrabbing.Add(leftHandGrab);
+            //CurrentlyGrabbing.Add(leftHandGrab);
             
             //set the closest to the right hand
             for (int i = 0; i < GrabPointsTop.Count; i++)
@@ -110,7 +110,7 @@ public class GrabbingContext
             }
             //to indicate which is the closest to the right hand
             FurthestGrabPointFromRightShoulder = rightHandGrab.transform.position;
-                CurrentlyGrabbing.Add(rightHandGrab);
+               // CurrentlyGrabbing.Add(rightHandGrab);
            
            ListCleanup(GrabPointsTop);
    
@@ -136,7 +136,7 @@ public class GrabbingContext
 
             float distanceToCheck = float.MaxValue;
 
-            CurrentlyGrabbing.Clear();
+            //CurrentlyGrabbing.Clear();
 
             for (int i = 0; i < ListOfClosestGrabPoints.Count; i++)
             {
@@ -151,13 +151,17 @@ public class GrabbingContext
             {
                 case EBodySide.Top:
                     FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
+                    CurrentlyGrabbing["LeftHand"] = leftHandGrab;
+
                     break;
                 case EBodySide.Bottom:
                     FurthestGrabPointFromLeftHip = leftHandGrab.transform.position;
+                    CurrentlyGrabbing["LeftLeg"] = leftHandGrab;
+                    Debug.Log(CurrentlyGrabbing["LeftLeg"]);
                     break;
             }
+
            
-            CurrentlyGrabbing.Add(leftHandGrab);
 
             //set the closest to the right hand
             for (int i = 0; i < ListOfClosestGrabPoints.Count; i++)
@@ -173,14 +177,17 @@ public class GrabbingContext
             {
                 case EBodySide.Top:
                     FurthestGrabPointFromRightShoulder = rightHandGrab.transform.position;
+                    CurrentlyGrabbing["RightHand"] = rightHandGrab;
                     break;
                 case EBodySide.Bottom:
                     FurthestGrabPointFromRightHip = rightHandGrab.transform.position;
+                    CurrentlyGrabbing["RightLeg"] = rightHandGrab;
+                    Debug.Log(CurrentlyGrabbing["RightLeg"]);
                     break;
             }
-            CurrentlyGrabbing.Add(rightHandGrab);
 
-            ListCleanup(ListOfClosestGrabPoints);
+            Debug.Log("no deletion");
+           ListCleanup(ListOfClosestGrabPoints);
          
         }
 

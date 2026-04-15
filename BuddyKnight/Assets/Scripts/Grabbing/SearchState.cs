@@ -10,17 +10,20 @@ public class SearchState:GrabbingState
     public override void EnterState()
     {
         Debug.Log("SearchIsentered");
-        Context.CurrenBodySide = GrabbingContext.EBodySide.Top;
-        Context.LegCollider.enabled = false;
+     
+        RigCollisionHandler.NewPointEntered += AddGrabbablePoints;
+        RigCollisionHandler.NewPointExited += DeleteGrabbablePoints;
     }
 
     public override void ExitState()
     {
+        RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
+        RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
         Debug.Log("SearchIsExited");
     }
     public override void UpdateState()
     {
-        
+        SetPointsForEachLimb();
 
         UpdateIkTargetPositionTracking();
 
@@ -32,13 +35,8 @@ public class SearchState:GrabbingState
 
     public override void OnTriggerEnter(Collider other)
     {
-       // Debug.Log("SearchState: TriggerEnter" + other.name + Context.CurrenBodySide);
-        if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
-        {
-           
-            ColliderSwitcheroo(other, true);
-
-        }
+     
+        
        
     }
     public override void OnTriggerStay(Collider other)
@@ -48,33 +46,8 @@ public class SearchState:GrabbingState
     public override void OnTriggerExit(Collider other)
     {
       
-        if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
-        {
-            
-           ColliderSwitcheroo(other, false);
-        }
-    }
-    private void ColliderSwitcheroo(Collider other, bool shouldAdd)
-    {
-      if(  UpdateGrabbablePoints(other.gameObject, Context.CurrenBodySide, shouldAdd))
-        {
-            if (Context.CurrenBodySide == GrabbingContext.EBodySide.Top)
-            {
-                Context.ArmCollider.enabled = false;
-                Context.LegCollider.enabled = true;
-                Context.CurrenBodySide = GrabbingContext.EBodySide.Bottom;
-            }
-            else
-            {
-                Context.LegCollider.enabled = false;
-                Context.ArmCollider.enabled = true;
-            
-                Context.CurrenBodySide = GrabbingContext.EBodySide.Top;
-            }
-        }
        
-
-        
     }
+ 
  
 }

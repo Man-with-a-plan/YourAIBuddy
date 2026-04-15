@@ -7,7 +7,7 @@ using UnityEngine.Animations.Rigging;
 
 public class GrabbingContext 
 {
-  public enum EBodySide {  Top, Bottom };
+ 
 
 
 
@@ -48,15 +48,16 @@ public class GrabbingContext
     public ChainIKConstraint CurrentIkConstraint;
     public MultiRotationConstraint CurrentMultiRotationConstraint;
 
-    public Collider ArmCollider;
-    public Collider LegCollider;
+   
    
     public Transform CurrentIkTargetTransform { get; private set; }
     public Transform CurrentShoulderTransform { get; private set; }
-    public EBodySide CurrenBodySide {  get; set; }
+ 
     
-    public List<GameObject> GrabPointsTop { get; private set; } = new List<GameObject>();
-    public List<GameObject> GrabPointsBottom { get; private set; } = new List<GameObject>();
+    public List<GameObject> GrabPointsLeftLeg { get; private set; } = new List<GameObject>();
+    public List<GameObject> GrabPointsRightLeg { get; private set; } = new List<GameObject>();
+    public List<GameObject> GrabPointsRightArm { get; private set; } = new List<GameObject>();
+    public List<GameObject> GrabPointsLeftArm { get; private set; } = new List<GameObject>();
     //List of game objects that character is currently grabbing. Later will be used to defy his rotation in ThirdPersonController
     public Dictionary<string, GameObject> CurrentlyGrabbing = new Dictionary<string, GameObject>();
 
@@ -72,153 +73,60 @@ public class GrabbingContext
 
     
 
-    public void SetPointsToGrabForBothHands()
+    
+    public void SetClosestPoint(List<GameObject> ListOfClosestGrabPoints, RigCollisionHandler.BodySide limb)
     {
-        
-        if (GrabPointsTop.Count > 0)
-        {
-            Vector3 leftShoulder = LeftIkConstraint.data.root.transform.position;
-            Vector3 rightShoulder = RightIkConstraint.data.root.transform.position;
-            float longestLeftDistance = Vector3.Distance(leftShoulder, GrabPointsTop[0].transform.position);
-            float longestRightDistance = Vector3.Distance(rightShoulder, GrabPointsTop[0].transform.position);
-            leftHandGrab = GrabPointsTop[0];
-            rightHandGrab = GrabPointsTop[0];
-            float distanceToCheck = float.MaxValue;
-
-           
-
-            for (int i = 0; i < GrabPointsTop.Count; i++)
-            {
-                distanceToCheck = Vector3.Distance(leftShoulder, GrabPointsTop[i].transform.position);
-                if (distanceToCheck > longestLeftDistance & GrabPointsTop[i] != rightHandGrab)
-                {
-                    leftHandGrab = GrabPointsTop[i];
-                }
-            }
-            //to indicate which is the closest to the left hand
-            FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
-            //CurrentlyGrabbing.Add(leftHandGrab);
-            
-            //set the closest to the right hand
-            for (int i = 0; i < GrabPointsTop.Count; i++)
-            {
-                distanceToCheck = Vector3.Distance(rightShoulder, GrabPointsTop[i].transform.position);
-                if (distanceToCheck > longestRightDistance  )
-                {
-                    rightHandGrab = GrabPointsTop[i];
-                }
-            }
-            //to indicate which is the closest to the right hand
-            FurthestGrabPointFromRightShoulder = rightHandGrab.transform.position;
-               // CurrentlyGrabbing.Add(rightHandGrab);
-           
-           ListCleanup(GrabPointsTop);
-   
-        }
-      
-    }
-    public void SetTwoClosestPoints(List<GameObject> ListOfClosestGrabPoints)
-    {
-
+       
         if (ListOfClosestGrabPoints.Count > 0)
         {
+           
             Vector3 Center = RightIkConstraint.data.root.transform.position;
-           
-
-
-           
         
             float longestLeftDistance = Vector3.Distance(Center, ListOfClosestGrabPoints[0].transform.position);
-            float longestRightDistance = Vector3.Distance(Center, ListOfClosestGrabPoints[0].transform.position);
-
             leftHandGrab = ListOfClosestGrabPoints[0];
-            rightHandGrab = ListOfClosestGrabPoints[0];
+        
 
             float distanceToCheck = float.MaxValue;
 
-            //CurrentlyGrabbing.Clear();
+        
 
             for (int i = 0; i < ListOfClosestGrabPoints.Count; i++)
             {
                 distanceToCheck = Vector3.Distance(Center, ListOfClosestGrabPoints[i].transform.position);
-                if (distanceToCheck > longestLeftDistance & ListOfClosestGrabPoints[i] != rightHandGrab)
+                if (distanceToCheck > longestLeftDistance & ListOfClosestGrabPoints[i] != CurrentlyGrabbing["RightLeg"])
                 {
                     leftHandGrab = ListOfClosestGrabPoints[i];
                 }
             }
             //to indicate which is the closest to the left hand
-            switch(CurrenBodySide)
+            switch(limb)
             {
-                case EBodySide.Top:
+                case RigCollisionHandler.BodySide.LeftArm:
                     FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
                     CurrentlyGrabbing["LeftHand"] = leftHandGrab;
-
                     break;
-                case EBodySide.Bottom:
+                case RigCollisionHandler.BodySide.RightArm:
+                    FurthestGrabPointFromRightShoulder = leftHandGrab.transform.position;
+                    CurrentlyGrabbing["RightHand"] = leftHandGrab;
+                    
+                    break;
+                case RigCollisionHandler.BodySide.RightLeg:
+                    FurthestGrabPointFromRightHip = leftHandGrab.transform.position;
+                    CurrentlyGrabbing["RightLeg"] = leftHandGrab;
+                    break;
+                case RigCollisionHandler.BodySide.LeftLeg:
                     FurthestGrabPointFromLeftHip = leftHandGrab.transform.position;
                     CurrentlyGrabbing["LeftLeg"] = leftHandGrab;
-                    Debug.Log(CurrentlyGrabbing["LeftLeg"]);
                     break;
             }
 
            
 
-            //set the closest to the right hand
-            for (int i = 0; i < ListOfClosestGrabPoints.Count; i++)
-            {
-                distanceToCheck = Vector3.Distance(Center, ListOfClosestGrabPoints[i].transform.position);
-                if (distanceToCheck > longestRightDistance & ListOfClosestGrabPoints[i] != leftHandGrab)
-                {
-                    rightHandGrab = ListOfClosestGrabPoints[i];
-                }
-            }
-            //to indicate which is the closest to the right hand
-            switch (CurrenBodySide)
-            {
-                case EBodySide.Top:
-                    FurthestGrabPointFromRightShoulder = rightHandGrab.transform.position;
-                    CurrentlyGrabbing["RightHand"] = rightHandGrab;
-                    break;
-                case EBodySide.Bottom:
-                    FurthestGrabPointFromRightHip = rightHandGrab.transform.position;
-                    CurrentlyGrabbing["RightLeg"] = rightHandGrab;
-                    Debug.Log(CurrentlyGrabbing["RightLeg"]);
-                    break;
-            }
-
-            Debug.Log("no deletion");
-           ListCleanup(ListOfClosestGrabPoints);
-         
         }
+        ListCleanup(ListOfClosestGrabPoints);
 
     }
-    public void SetCurrentSide(Vector3 positionToCheck)
-    {
-        Vector3 leftShoulder = _leftIkConstraint.data.root.transform.position;
-        Vector3 rightShoulder = _rightIkConstraint.data.root.transform.position;
-        //test if bug depends on left only less
-        bool isLeftCloser = Vector3.Distance(positionToCheck, leftShoulder) < Vector3.Distance(positionToCheck, rightShoulder);
-
-        if (isLeftCloser)
-        {
-           
-
-            CurrenBodySide = EBodySide.Top;
-            CurrentIkConstraint = _leftIkConstraintChain;
-            CurrentMultiRotationConstraint = _leftMultiRotConstraint;
-
-        }
-        else
-        {
-        
-            CurrenBodySide = EBodySide.Bottom;
-            CurrentIkConstraint = _rightIkConstraintChain;
-            CurrentMultiRotationConstraint = _rightMultiRotConstraint;
-
-        }
-        CurrentShoulderTransform = CurrentIkConstraint.data.root.transform;
-        CurrentIkTargetTransform = CurrentIkConstraint.data.target.transform;
-    }
+    
     void ListCleanup(List<GameObject> ListToClean)
    {
 

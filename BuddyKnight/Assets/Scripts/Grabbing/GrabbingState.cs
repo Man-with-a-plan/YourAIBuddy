@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor.Rendering.LookDev;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Rendering;
 
 public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingState >
@@ -14,52 +15,46 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
     }
 
    //Point list manipulation
-    protected bool UpdateGrabbablePoints(GameObject grabPoint, GrabbingContext.EBodySide side, bool shouldAdd)
+    protected void AddGrabbablePoints(GameObject grabbable, RigCollisionHandler.BodySide limb)
     {
-        if (shouldAdd & !Context.GrabPointsTop.Contains(grabPoint) & !Context.GrabPointsBottom.Contains(grabPoint) )
+        switch (limb)
         {
-
-            AddToList(grabPoint, side);
-         
-            Debug.Log(Context.GrabPointsBottom.Count +"Bottom");
-            return true;
+            case RigCollisionHandler.BodySide.RightArm:
+                Context.GrabPointsRightArm.Add(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftArm:
+                Context.GrabPointsLeftArm.Add(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.RightLeg:
+                Context.GrabPointsRightLeg.Add(grabbable); 
+                break;
+            case RigCollisionHandler.BodySide.LeftLeg:
+                Context.GrabPointsLeftLeg.Add(grabbable);
+                break;
 
         }
-        else if(!shouldAdd)
-        {
-            DeleteFromList(grabPoint, side);
-         
-           return true;
-
-        }
-        Context.SetTwoClosestPoints(side == GrabbingContext.EBodySide.Top ? Context.GrabPointsTop : Context.GrabPointsBottom);
-      
-        //Context.SetPointsToGrabForBothHands();
-        return false;
     }
     
-    protected void DeleteFromList(GameObject grabPoint, GrabbingContext.EBodySide side)
+    protected void DeleteGrabbablePoints(GameObject grabbable, RigCollisionHandler.BodySide limb)
     {
-        if (side == GrabbingContext.EBodySide.Top)
+        switch (limb)
         {
-            Context.GrabPointsTop.Remove(grabPoint);
-        }
-        else
-        {
-            Context.GrabPointsBottom.Remove(grabPoint);
+            case RigCollisionHandler.BodySide.RightArm:
+                Context.GrabPointsRightArm.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftArm:
+                Context.GrabPointsLeftArm.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.RightLeg:
+                Context.GrabPointsRightLeg.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftLeg:
+                Context.GrabPointsLeftLeg.Remove(grabbable);
+                break;
+
         }
     }
-    protected void AddToList(GameObject grabPoint, GrabbingContext.EBodySide side)
-    {
-        if (side == GrabbingContext.EBodySide.Top)
-        {
-            Context.GrabPointsTop.Add(grabPoint);
-        }
-        else
-        {
-            Context.GrabPointsBottom.Add(grabPoint);
-        }
-    }
+ 
 
     private Vector3 GetClosestPointOnCollider(Collider intersectingCollider, Vector3 posToCheck)
     {
@@ -68,7 +63,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
     protected void StartIkTargetPositionTracking(Collider intersectingCollider)
     {
         Vector3 ClosestPointFromRoot = GetClosestPointOnCollider(intersectingCollider, Context.RootTransform.position);
-        Context.SetCurrentSide(ClosestPointFromRoot);
+       
         Debug.Log(intersectingCollider);
         SetIkTargetPosition();
     }
@@ -79,6 +74,14 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
     protected void ResetIkTargetPositionTracking(Collider intersectingCollider)
     {
 
+    }
+    protected void SetPointsForEachLimb()
+    {
+        Context.SetClosestPoint(Context.GrabPointsLeftArm, RigCollisionHandler.BodySide.LeftArm);
+        Context.SetClosestPoint(Context.GrabPointsRightArm, RigCollisionHandler.BodySide.RightArm);
+        Context.SetClosestPoint(Context.GrabPointsLeftLeg, RigCollisionHandler.BodySide.LeftLeg);
+        Context.SetClosestPoint(Context.GrabPointsRightLeg, RigCollisionHandler.BodySide.RightLeg);
+        Debug.Log("Set");
     }
     private void SetIkTargetPosition()
     {

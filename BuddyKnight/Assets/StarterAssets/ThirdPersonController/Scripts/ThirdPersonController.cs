@@ -409,8 +409,8 @@ namespace StarterAssets
                 {
                     Debug.DrawRay(key.transform.position, Vector3.up * .4f, Color.cyan);
                 }
-                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
-                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
+                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
                 Vector3 toCenter = Vector3.Cross(vector2, vector1);
               
 

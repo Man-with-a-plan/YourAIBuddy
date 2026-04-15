@@ -25,7 +25,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     [SerializeField] private ChainIKConstraint _rightIkConstraintChain;
     [SerializeField] public float _reachDistance = 2f;
     
-
+    
 
     private void OnDrawGizmosSelected()
     {
@@ -48,9 +48,10 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         ValidateConstraints();
         _context = new GrabbingContext(_leftIkConstraintChain, _rightIkConstraintChain, _leftIkConstraint,_rightIkConstraint, _leftMultiRotConstraint, _rightMultiRotConstraint,
             _characterController, transform.root);
+        _context.CurrentlyGrabbing["RightLeg"] = new GameObject();
         InitializeStates();
-        ConstructEnvironmentDetectionCollider();
-        ConstructEnvironmentDetectionColliderForLegs();
+       
+      
     }
 
     private void ValidateConstraints()
@@ -71,27 +72,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         States.Add(EGrabbingState.Reset, new ResetState(_context, EGrabbingState.Reset));
         CurrentState = States[EGrabbingState.Search];
     }
-    private void ConstructEnvironmentDetectionCollider()
-    {
-        float wingspan = _characterController.height;
-        SphereCollider sphereCollider = gameObject.AddComponent<SphereCollider>();
-      //  sphereCollider.size = new Vector3(wingspan/_reachDistance, wingspan/_reachDistance, wingspan/_reachDistance);
-       // sphereCollider.center = new Vector3(_characterController.center.x, _characterController.center.y +(.2f * wingspan), _characterController.center.z+0.5f);
-       sphereCollider.radius = wingspan/_reachDistance;
-       sphereCollider.center = new Vector3(_characterController.center.x, _characterController.center.y + (.33f * wingspan), _characterController.center.z+0.2f);
-      sphereCollider.isTrigger = true;
-        _context.ArmCollider = sphereCollider;
-    }
-    private void ConstructEnvironmentDetectionColliderForLegs()
-    {
-        float wingspan = _characterController.height;
-        SphereCollider sphereCollider = gameObject.AddComponent<SphereCollider>();
-        //  sphereCollider.size = new Vector3(wingspan/_reachDistance, wingspan/_reachDistance, wingspan/_reachDistance);
-        // sphereCollider.center = new Vector3(_characterController.center.x, _characterController.center.y +(.2f * wingspan), _characterController.center.z+0.5f);
-        sphereCollider.radius = wingspan / _reachDistance;
-        sphereCollider.center = new Vector3(_characterController.center.x, _characterController.center.y - (.31f * wingspan), _characterController.center.z+0.2f);
-       sphereCollider.isTrigger = true;
-        _context.LegCollider = sphereCollider;
-    }
+   
+   
   
 }

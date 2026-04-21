@@ -243,12 +243,12 @@ namespace StarterAssets
             CanClimb = true;
         }
 
-        private void GrabLadder(Vector3 lastGrabLadderDirection)
+        private void GrabLadder()
         {
             if (CanClimb == true)
             {
                 isClimbingLadder = true;
-                this.lastGrabLadderDirection = lastGrabLadderDirection;
+              
                 
                 _animator.SetBool(_animIDClimbing, isClimbingLadder);
                 
@@ -261,6 +261,75 @@ namespace StarterAssets
             isClimbingLadder = false;
             _animator.SetBool(_animIDClimbing, isClimbingLadder);
         }
+
+        private Vector3 GetPlaneNormal()
+        {
+            try
+            {
+                Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
+                Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+                Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
+                Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
+               
+
+
+                // Create two edge vectors from the limb positions
+                Vector3 edge1 = rightLegPos - leftHandPos;  // Vector from left hand to right leg
+                Vector3 edge2 = leftLegPos - leftHandPos;    // Vector from left hand to left leg
+
+                // Calculate the normal vector using cross product
+                Vector3 normalVector = Vector3.Cross(edge2, edge1).normalized;
+
+                return normalVector;
+        }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Not all limbs are grabbing. Cannot calculate plane normal: " + e.Message);
+                return Vector3.zero; // Return a default value or handle as needed
+            }
+
+}
+
+        private void OnDrawGizmos()
+        {
+            if (ContextOfLimbPositions == null || ContextOfLimbPositions.CurrentlyGrabbing.Count < 4)
+                return;
+
+            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
+            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
+            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
+
+            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
+
+            // Draw center point
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(centerPoint, 0.1f);
+
+            // Draw normal vector
+            Gizmos.color = Color.cyan;
+            Vector3 edge1 = rightHandPos - leftHandPos;
+            Vector3 edge2 = leftLegPos - leftHandPos;
+            Vector3 normalVector = Vector3.Cross(edge1, edge2).normalized;
+            Gizmos.DrawLine(centerPoint, centerPoint + normalVector * 0.5f);
+
+        }
+      
+        private void RotateAroundCenter(Quaternion targetRotation)
+        {
+            Vector3 worldCenter = transform.position + transform.TransformDirection(_controller.center);
+
+            // Get the offset from center to the transform's pivot
+            Vector3 offsetFromCenter = transform.position - worldCenter;
+
+            // Rotate the offset by the target rotation
+            Vector3 rotatedOffset = targetRotation * offsetFromCenter;
+
+            // Apply new position and rotation
+            transform.position = worldCenter + rotatedOffset;
+            transform.rotation = targetRotation;
+        }
+
 
         private void Move()
         {
@@ -311,125 +380,79 @@ namespace StarterAssets
             Debug.DrawRay(transform.position + Vector3.up, targetDirection * .4f, Color.red);
 
             //Code for attatching to a ladder. No IK. 
-            if (!isClimbingLadder)
-            {
-               if(Input.GetKeyDown(KeyCode.E)) {
-                    float avoidFloor = 0.1f;
-                    float ladderGrabDist = .5f;
-                    if (Physics.Raycast(transform.position + Vector3.up * avoidFloor, targetDirection,
-                        out RaycastHit raycastHit, ladderGrabDist))
-                    {
-                        if (raycastHit.transform.TryGetComponent(out Ladder ladder))
-                        {
-                            GameObject hitObject = raycastHit.collider.gameObject;
-                            // 2. Get a specific component from it (e.g., MyCustomComponent)
-                            Transform transform = hitObject.GetComponent<Transform>();
-                            _climbingNowThisLadder = transform;
-                            GrabLadder(targetDirection);
-
-                        }
-                    }
-                    }
-                }
-            //Code for holding onto ladder and letting go
-                else
-                {
-                    float avoidFloor = 0.1f;
-                    float ladderGrabDist = 3f;
-                
-                Vector3 toCenter = (_climbingNowThisLadder.position - transform.position).normalized;
-
-                toCenter.y = 0;
-                
-
-                lastGrabLadderDirection = toCenter;
-                Debug.DrawRay(transform.position + Vector3.up, lastGrabLadderDirection * .4f, Color.blue);
+            if (Input.GetKeyDown(KeyCode.E) & GetPlaneNormal() != Vector3.zero)
+            { 
                 //Drop ladder if the player reached the top
-                if (Physics.Raycast(transform.position + Vector3.up * avoidFloor, lastGrabLadderDirection, out RaycastHit raycastHit, ladderGrabDist))
-                    {
-
-                        if (!raycastHit.transform.TryGetComponent(out Ladder ladder))
-                        {
-                            DropLadder();
-                            Debug.Log("drop");
-                      
-                            _verticalVelocity = 4f;
-
-                        }
-                    Debug.Log(isClimbingLadder);
-
-                    }
-                    else
-                    {
-                        DropLadder();
-                        _verticalVelocity = 4f;
-                    Debug.Log("ladder is dropped for no reason");
-                    }
-
-
-
-
-                //Reach the ground - drop the ladder
-
-
-
-                    if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-                    {
-                    
-                    float ladderFloorDropDist = .1f;
-                    Debug.Log("Its going down i shouting timber");
-
-                    if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit floorRaycastHit, ladderFloorDropDist))
-                        {
-                            DropLadder();
-                        Debug.Log("dropLadder");
-                        }
-
-                    }
-                    //Drop the ladder if too hot
-                    if(CanClimb == false)
-                {
-                    DropLadder();
-                    Debug.Log("too hot to climb");
-                }
-                }
+                GrabLadder();
+            }  
 
 
             //Change moveset if is climbing
 
                 if (isClimbingLadder)
                 {
-             
+                float avoidFloor = 0.1f;
+                float ladderGrabDist = 3f;
+                Vector3 toCenter = GetPlaneNormal();
+                Debug.DrawRay(transform.position + Vector3.up, toCenter * .4f, Color.blue);
+
+
+                if (!Physics.Raycast(transform.position + Vector3.up, toCenter, out RaycastHit raycastHit, ladderGrabDist))
+                {
+
+                    DropLadder();
+                    Debug.Log("drop");
+                    _verticalVelocity = 4f;
+                    Debug.Log(isClimbingLadder);
+
+                }
+                //Reach the ground - drop the ladder
+
+                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+                {
+
+                    float ladderFloorDropDist = .1f;
+                    Debug.Log("Its going down i shouting timber");
+
+                    if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit floorRaycastHit, ladderFloorDropDist))
+                    {
+                        DropLadder();
+                        Debug.Log("dropLadder");
+                    }
+
+                }
+                //Drop the ladder if too hot
+                if (CanClimb == false)
+                {
+                    DropLadder();
+                    Debug.Log("too hot to climb");
+                }
                 targetDirection.y = targetDirection.z;
                     targetDirection.z = 0f;
                     _verticalVelocity = 0f;
                     Grounded = true;
                     _speed = targetSpeed;
-                foreach(var key in ContextOfLimbPositions.CurrentlyGrabbing.Values)
-                {
-                    Debug.DrawRay(key.transform.position, Vector3.up * .4f, Color.cyan);
-                }
-                Vector3 vector1 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
-                Vector3 vector2 = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position - ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
-                Vector3 toCenter = Vector3.Cross(vector2, vector1);
-              
+             
 
 
-                // (_climbingNowThisLadder.position - transform.position).normalized
-
-                Vector3 tangentDirection = Vector3.Cross(Vector3.up, toCenter); // Move around cylinder
+                Vector3 tangentDirection = Vector3.Cross(transform.rotation * Vector3.up, toCenter); 
 
                 // Apply movement input along this direction
                 Vector3 move = tangentDirection * Input.GetAxis("Horizontal") + Vector3.up * Input.GetAxis("Vertical");
 
-                Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green);
+                Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green, 2);
 
             
               
-
+               // RotateAroundCenter(Quaternion.LookRotation(toCenter, Vector3.up));
+               transform.rotation = Quaternion.LookRotation(toCenter, (transform.rotation * Vector3.up).normalized);
                 _controller.Move(move.normalized * (_speed * Time.deltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
             
+
+
+
+
                 }
 
             else
@@ -451,7 +474,7 @@ namespace StarterAssets
                 if (isClimbingLadder)
                 {
 
-                    Vector3 directionToCenter = _climbingNowThisLadder.position - transform.position;
+                    Vector3 directionToCenter = GetPlaneNormal();
                     directionToCenter.y = 0;
 
       
@@ -465,11 +488,12 @@ namespace StarterAssets
                     if (desiredDirection.sqrMagnitude > 0.001f)
                     {
 
-                        transform.rotation = Quaternion.Slerp(
-                            transform.rotation,
-                            targetRotation,
-                            Time.deltaTime
-                        );
+                        //transform.rotation = Quaternion.Slerp(
+                        //    transform.rotation,
+                        //    targetRotation,
+                        //    Time.deltaTime
+                        //);
+                       // transform.rotation = Quaternion.Euler(0.0f, targetRotation.eulerAngles.y, 0.0f);
                     }
 
                    //Debug.Log("rotating");
@@ -477,8 +501,8 @@ namespace StarterAssets
 
 
 
-                    // rotate to face input direction relative to camera position
-                    // transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);*/
+                    //rotate to face input direction relative to camera position
+                    //transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 }
 
                 else

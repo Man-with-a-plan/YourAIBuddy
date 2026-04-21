@@ -32,7 +32,7 @@ public class RigCollisionHandler : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
         {
             NewPointEntered?.Invoke(other.gameObject, Limb);
-            Debug.Log("New Point Entered");
+           // Debug.Log("New Point Entered");
         }
     }
     void OnTriggerExit(Collider other)
@@ -40,7 +40,7 @@ public class RigCollisionHandler : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Grabbable"))
         {
             NewPointExited?.Invoke(other.gameObject, Limb);
-            Debug.Log("New Point Exited");
+           // Debug.Log("New Point Exited");
         }
     }
 }

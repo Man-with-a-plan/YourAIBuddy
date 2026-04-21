@@ -81,7 +81,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         Context.SetClosestPoint(Context.GrabPointsRightArm, RigCollisionHandler.BodySide.RightArm);
         Context.SetClosestPoint(Context.GrabPointsLeftLeg, RigCollisionHandler.BodySide.LeftLeg);
         Context.SetClosestPoint(Context.GrabPointsRightLeg, RigCollisionHandler.BodySide.RightLeg);
-        Debug.Log("Set");
+     
     }
     private void SetIkTargetPosition()
     {

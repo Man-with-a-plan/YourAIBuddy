@@ -124,7 +124,8 @@ namespace StarterAssets
         private const float _threshold = 0.01f;
 
         private bool _hasAnimator;
-
+      private  Vector3 toCenter = new Vector3();
+        private Vector3 planeNormal = new Vector3();
         private bool IsCurrentDeviceMouse
         {
             get
@@ -261,6 +262,39 @@ namespace StarterAssets
             isClimbingLadder = false;
             _animator.SetBool(_animIDClimbing, isClimbingLadder);
         }
+        private Vector3 GetCenterVector()
+        {
+            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
+            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
+            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
+
+            // Calculate the centroid of all four limbs
+            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
+
+          //  Debug.Log(centerPoint.y - transform.position.y);
+
+            // Return direction from character to center
+            return (centerPoint - (transform.position + Vector3.up)).normalized;
+        }
+        private Vector3 GetCenter()
+        {
+            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
+            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
+            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
+            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
+
+            // Calculate the centroid of all four limbs
+            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
+            if (leftHandPos.x < rightHandPos.x)
+            {
+                Debug.Log("Left hand is to the right of the right hand. Check your limb assignments.");
+            }
+            //  Debug.Log(centerPoint.y - transform.position.y);
+
+            // Return direction from character to center
+            return centerPoint;
+        }
 
         private Vector3 GetPlaneNormal()
         {
@@ -295,25 +329,18 @@ namespace StarterAssets
             if (ContextOfLimbPositions == null || ContextOfLimbPositions.CurrentlyGrabbing.Count < 4)
                 return;
 
-            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
-            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
-            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
-            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
-
-            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
-
+           
             // Draw center point
             Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(centerPoint, 0.1f);
-
+            Gizmos.DrawSphere(GetCenter(), 0.1f);
+            
             // Draw normal vector
             Gizmos.color = Color.cyan;
-            Vector3 edge1 = rightHandPos - leftHandPos;
-            Vector3 edge2 = leftLegPos - leftHandPos;
-            Vector3 normalVector = Vector3.Cross(edge1, edge2).normalized;
-            Gizmos.DrawLine(centerPoint, centerPoint + normalVector * 0.5f);
+        
+            Gizmos.DrawLine(GetCenter(), GetCenter() + GetPlaneNormal());
 
         }
+
       
         private void RotateAroundCenter(Quaternion targetRotation)
         {
@@ -326,7 +353,7 @@ namespace StarterAssets
             Vector3 rotatedOffset = targetRotation * offsetFromCenter;
 
             // Apply new position and rotation
-            transform.position = worldCenter + rotatedOffset;
+            //transform.position = worldCenter + rotatedOffset;
             transform.rotation = targetRotation;
         }
 
@@ -336,7 +363,7 @@ namespace StarterAssets
 
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
-
+        
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
@@ -392,19 +419,31 @@ namespace StarterAssets
                 if (isClimbingLadder)
                 {
                 float avoidFloor = 0.1f;
-                float ladderGrabDist = 3f;
-                Vector3 toCenter = GetPlaneNormal();
-                Debug.DrawRay(transform.position + Vector3.up, toCenter * .4f, Color.blue);
+                float ladderGrabDist = 1f;
+                if (GetPlaneNormal() != planeNormal)
+                {
+                    planeNormal = GetPlaneNormal();
+                }
+               
+                Debug.DrawRay(transform.position + Vector3.up, transform.forward * ladderGrabDist, Color.blue, 1);
 
 
-                if (!Physics.Raycast(transform.position + Vector3.up, toCenter, out RaycastHit raycastHit, ladderGrabDist))
+                if (!Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit raycastHit, ladderGrabDist))
                 {
 
                     DropLadder();
                     Debug.Log("drop");
                     _verticalVelocity = 4f;
                     Debug.Log(isClimbingLadder);
+                }
+                float desiredDistance = 0.5f;
 
+                if (Physics.Raycast(transform.position + Vector3.up, planeNormal, out RaycastHit hit, 2f))
+                {
+                    Vector3 targetPosition = hit.point - planeNormal * desiredDistance;
+
+                    // Smoothly snap to wall
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 10f);
                 }
                 //Reach the ground - drop the ladder
 
@@ -427,33 +466,36 @@ namespace StarterAssets
                     DropLadder();
                     Debug.Log("too hot to climb");
                 }
-                targetDirection.y = targetDirection.z;
-                    targetDirection.z = 0f;
+                //targetDirection.y = transform.rotation.normalized.z;
+                //    targetDirection.z = 0f;
                     _verticalVelocity = 0f;
                     Grounded = true;
                     _speed = targetSpeed;
-             
 
-
-                Vector3 tangentDirection = Vector3.Cross(transform.rotation * Vector3.up, toCenter); 
+                Vector3 upAlongPlane = Vector3.Cross(planeNormal, Vector3.right).normalized;
+                Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
 
                 // Apply movement input along this direction
-                Vector3 move = tangentDirection * Input.GetAxis("Horizontal") + Vector3.up * Input.GetAxis("Vertical");
+                Vector3 sideways = Vector3.Cross(Vector3.up, planeNormal).normalized;
+
+                Vector3 move = sideways * _input.move.x
+                             + Vector3.up * _input.move.y;
+
+                // 🔥 This fixes your exact issue
+                move = Vector3.ProjectOnPlane(move, planeNormal);
+
+                _controller.Move(move.normalized * (_speed * Time.deltaTime));
 
                 Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green, 2);
 
-            
-              
-               // RotateAroundCenter(Quaternion.LookRotation(toCenter, Vector3.up));
-               transform.rotation = Quaternion.LookRotation(toCenter, (transform.rotation * Vector3.up).normalized);
-                _controller.Move(move.normalized * (_speed * Time.deltaTime) +
-                new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-            
+
+                // RotateAroundCenter(Quaternion.LookRotation(planeNormal, Vector3.up));
+                //RotateAroundCenter(Quaternion.LookRotation(planeNormal, (transform.rotation * Vector3.up).normalized));
+                //_controller.Move(move.normalized * (_speed * Time.deltaTime) +
+                //new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 
 
-
-
-                }
+            }
 
             else
             { // move the player
@@ -474,16 +516,16 @@ namespace StarterAssets
                 if (isClimbingLadder)
                 {
 
-                    Vector3 directionToCenter = GetPlaneNormal();
-                    directionToCenter.y = 0;
+                    Vector3 directionToCenter = GetCenterVector();
+                    //directionToCenter.y = 0;
 
       
-                    Vector3 sideways = Vector3.Cross(Vector3.up, directionToCenter).normalized;
+                    Vector3 sideways = Vector3.Cross(Vector3.up, planeNormal).normalized;
 
               
                     Vector3 desiredDirection =  sideways * inputDirection.x;
                     Debug.DrawRay(transform.position, desiredDirection, Color.yellow);
-                    Quaternion targetRotation = Quaternion.LookRotation(directionToCenter.normalized);
+                    Quaternion targetRotation = Quaternion.LookRotation(-planeNormal, Vector3.up);
 
                     if (desiredDirection.sqrMagnitude > 0.001f)
                     {
@@ -493,13 +535,15 @@ namespace StarterAssets
                         //    targetRotation,
                         //    Time.deltaTime
                         //);
-                       // transform.rotation = Quaternion.Euler(0.0f, targetRotation.eulerAngles.y, 0.0f);
+                        //RotateAroundCenter(targetRotation.normalized);
+                       
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+
                     }
 
-                   //Debug.Log("rotating");
+                    //Debug.Log("rotating");
 
-
-
+           
 
                     //rotate to face input direction relative to camera position
                     //transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);

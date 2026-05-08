@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.Assertions;
@@ -45,10 +46,12 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
 
     private void Awake()
     {
+        
         ValidateConstraints();
         _context = new GrabbingContext(_leftIkConstraintChain, _rightIkConstraintChain, _leftIkConstraint,_rightIkConstraint, _leftMultiRotConstraint, _rightMultiRotConstraint,
             _characterController, transform.root);
         _context.CurrentlyGrabbing["RightLeg"] = new GameObject();
+      //  _context.Normal = GetPlaneNormal();
         InitializeStates();
        
       
@@ -72,7 +75,11 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         States.Add(EGrabbingState.Reset, new ResetState(_context, EGrabbingState.Reset));
         CurrentState = States[EGrabbingState.Search];
     }
-   
-   
-  
+    public Vector3 GetPlaneNormal()
+    {
+        return _context.GetPlaneNormal();
+    }
+    
+
+
 }

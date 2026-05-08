@@ -70,7 +70,7 @@ public class GrabbingContext
 
     //To optimise can change to Vector3
     protected GameObject leftHandGrab, rightHandGrab;
-
+    public Vector3 Normal;
     
 
     
@@ -108,7 +108,6 @@ public class GrabbingContext
                 case RigCollisionHandler.BodySide.RightArm:
                     FurthestGrabPointFromRightShoulder = leftHandGrab.transform.position;
                     CurrentlyGrabbing["RightHand"] = leftHandGrab;
-                    
                     break;
                 case RigCollisionHandler.BodySide.RightLeg:
                     FurthestGrabPointFromRightHip = leftHandGrab.transform.position;
@@ -151,7 +150,34 @@ public class GrabbingContext
             }
         }
     }
-  
 
+
+    public Vector3 GetPlaneNormal()
+    {
+        try
+        {
+            Vector3 leftHandPos = CurrentlyGrabbing["LeftHand"].transform.position;
+            Vector3 rightHandPos = CurrentlyGrabbing["RightHand"].transform.position;
+            Vector3 leftLegPos = CurrentlyGrabbing["LeftLeg"].transform.position;
+            Vector3 rightLegPos = CurrentlyGrabbing["RightLeg"].transform.position;
+
+
+
+            // Create two edge vectors from the limb positions
+            Vector3 edge1 = rightLegPos - leftHandPos;  // Vector from left hand to right leg
+            Vector3 edge2 = leftLegPos - leftHandPos;    // Vector from left hand to left leg
+
+            // Calculate the normal vector using cross product
+            Vector3 normalVector = Vector3.Cross(edge2, edge1).normalized;
+
+            return normalVector;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Not all limbs are grabbing. Cannot calculate plane normal: " + e.Message);
+            return Vector3.zero; // Return a default value or handle as needed
+        }
+
+    }
 
 }

@@ -1,129 +1,229 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using UnityEditor.Rendering.LookDev;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Rendering;
 
 public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingState>
 {
     protected GrabbingContext Context;
 
-    public GrabbingState(GrabbingContext context, GrabbingStateMachine.EGrabbingState stateKey) : base(stateKey)
+    // Track active coroutines so they don't stack
+    private Coroutine ikSequenceRoutine;
+
+    public GrabbingState(
+        GrabbingContext context,
+        GrabbingStateMachine.EGrabbingState stateKey)
+        : base(stateKey)
     {
         Context = context;
-
     }
 
-    //Point list manipulation
-    protected void AddGrabbablePoints(GameObject grabbable, RigCollisionHandler.BodySide limb)
+    #region Point List Manipulation
+
+    protected void AddGrabbablePoints(
+        GameObject grabbable,
+        RigCollisionHandler.BodySide limb)
     {
         switch (limb)
         {
             case RigCollisionHandler.BodySide.RightArm:
                 Context.GrabPointsRightArm.Add(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.LeftArm:
                 Context.GrabPointsLeftArm.Add(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.RightLeg:
                 Context.GrabPointsRightLeg.Add(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.LeftLeg:
                 Context.GrabPointsLeftLeg.Add(grabbable);
                 break;
-
         }
     }
 
-    protected void DeleteGrabbablePoints(GameObject grabbable, RigCollisionHandler.BodySide limb)
+    protected void DeleteGrabbablePoints(
+        GameObject grabbable,
+        RigCollisionHandler.BodySide limb)
     {
         switch (limb)
         {
             case RigCollisionHandler.BodySide.RightArm:
                 Context.GrabPointsRightArm.Remove(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.LeftArm:
                 Context.GrabPointsLeftArm.Remove(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.RightLeg:
                 Context.GrabPointsRightLeg.Remove(grabbable);
                 break;
+
             case RigCollisionHandler.BodySide.LeftLeg:
                 Context.GrabPointsLeftLeg.Remove(grabbable);
                 break;
-
         }
     }
 
+    #endregion
 
-    private Vector3 GetClosestPointOnCollider(Collider intersectingCollider, Vector3 posToCheck)
+    #region IK Tracking
+
+    private Vector3 GetClosestPointOnCollider(
+        Collider intersectingCollider,
+        Vector3 positionToCheck)
     {
-        return intersectingCollider.ClosestPoint(posToCheck);
+        return intersectingCollider.ClosestPoint(positionToCheck);
     }
-    protected async Task StartIkTargetPositionTracking(Collider intersectingCollider)
+
+    protected void StartIkTargetPositionTracking(Collider intersectingCollider)
     {
-        Vector3 ClosestPointFromRoot = GetClosestPointOnCollider(intersectingCollider, Context.RootTransform.position);
+        Vector3 closestPointFromRoot =
+            GetClosestPointOnCollider(
+                intersectingCollider,
+                Context.RootTransform.position);
 
         Debug.Log(intersectingCollider);
-       await SetIkTargetPosition();
+
+        SetIkTargetPosition();
     }
-    protected async void UpdateIkTargetPositionTracking()
+
+    protected void UpdateIkTargetPositionTracking()
     {
-        await SetIkTargetPosition();
+        SetIkTargetPosition();
     }
+
     protected void ResetIkTargetPositionTracking(Collider intersectingCollider)
     {
-
+      
     }
+
+    #endregion
+
+    #region Grab Point Calculations
+
     protected void SetPointsForEachLimb()
     {
-        Context.SetClosestPoint(Context.GrabPointsLeftArm, RigCollisionHandler.BodySide.LeftArm);
-        Context.SetClosestPoint(Context.GrabPointsRightArm, RigCollisionHandler.BodySide.RightArm);
-        Context.SetClosestPoint(Context.GrabPointsLeftLeg, RigCollisionHandler.BodySide.LeftLeg);
-        Context.SetClosestPoint(Context.GrabPointsRightLeg, RigCollisionHandler.BodySide.RightLeg);
+        Context.SetClosestPoint(
+            Context.GrabPointsLeftArm,
+            RigCollisionHandler.BodySide.LeftArm);
 
+        Context.SetClosestPoint(
+            Context.GrabPointsRightArm,
+            RigCollisionHandler.BodySide.RightArm);
+
+        Context.SetClosestPoint(
+            Context.GrabPointsLeftLeg,
+            RigCollisionHandler.BodySide.LeftLeg);
+
+        Context.SetClosestPoint(
+            Context.GrabPointsRightLeg,
+            RigCollisionHandler.BodySide.RightLeg);
     }
-     private async Task SetIkTargetPosition()
+
+    #endregion
+
+    #region IK Movement
+
+    private void SetIkTargetPosition()
     {
-        float speed = 4f; // Adjust this value to control the speed of the transition
-       await SmoothTransitionToTargetPosition(Context.LeftIkConstraint.data.target.transform, Context.FurthestGrabPointFromLeftShoulder, speed);
-        await SmoothTransitionToTargetPosition(Context.RightIkConstraint.data.target.transform, Context.FurthestGrabPointFromRightShoulder, speed);
-        await SmoothTransitionToTargetPosition(Context.LeftLegIkConstraint.data.target.transform, Context.FurthestGrabPointFromLeftHip, speed);
-        await SmoothTransitionToTargetPosition(Context.RightLegIkConstraint.data.target.transform, Context.FurthestGrabPointFromRightHip, speed);
+        // Already running
+        if (ikSequenceRoutine != null)
+            return;
 
-        //Context.RightIkConstraint.data.target.transform.position = Vector3.MoveTowards(
-        //                  Context.RightIkConstraint.data.target.transform.position,
-        //                  Context.FurthestGrabPointFromRightShoulder,
-        //                  Time.deltaTime
-        //              );
+        ikSequenceRoutine = Context.StateMachine.RunCoroutine(
+            MoveLimbsSequentially()
+        );
+    }
 
-        //Context.LeftLegIkConstraint.data.target.transform.position = Vector3.MoveTowards(
-        //    Context.LeftLegIkConstraint.data.target.transform.position,
+    private IEnumerator SmoothMoveCoroutine(
+     Transform targetArm,
+     Vector3 destinationArm,
+     Transform targetLeg,
+     Vector3 destinationLeg,
+     float speed)
+    {
+        if (destinationArm == Vector3.zero)
+        {
+            Debug.LogWarning($"Destination is zero for {targetArm.name}, skipping movement.");
+            yield break;
+        }
+
+        Vector3 startPosition = targetArm.position;
+
+        float journeyLength = Vector3.Distance(startPosition, destinationArm);
+
+        if (journeyLength < 0.001f)
+            yield break;
+
+        float elapsed = 0f;
+
+        // Controls how high the arc goes
+        float arcHeight = 0.25f;
+
+        while (elapsed < 1f)
+        {
+            
+            elapsed += (speed / journeyLength) * Time.deltaTime;
+
+            // Base linear interpolation
+            Vector3 position = Vector3.Lerp(
+                startPosition,
+                destinationArm,
+                elapsed
+            );
+
+            // Arc motion (parabola)
+            float heightOffset = 4f * arcHeight * elapsed * (1f - elapsed);
+
+            position += Vector3.up * heightOffset;
+
+            targetArm.position = position;
+
+            yield return null;
+        }
+
+        targetLeg.position = destinationLeg;
+    }
+
+    private IEnumerator MoveLimbsSequentially()
+    {
+        float speed = 2f;
+
+        yield return SmoothMoveCoroutine(
+            Context.LeftIkConstraint.data.target.transform,
+            Context.FurthestGrabPointFromLeftShoulder,
+            Context.RightLegIkConstraint.data.target.transform,
+            Context.FurthestGrabPointFromRightHip,
+            speed
+        );
+
+        yield return SmoothMoveCoroutine(
+            Context.RightIkConstraint.data.target.transform,
+            Context.FurthestGrabPointFromRightShoulder,
+            Context.LeftLegIkConstraint.data.target.transform,
+            Context.FurthestGrabPointFromLeftHip,
+            speed
+        );
+
+        //yield return SmoothMoveCoroutine(
+        //    Context.LeftLegIkConstraint.data.target.transform,
         //    Context.FurthestGrabPointFromLeftHip,
-        //    Time.deltaTime
-        //    );
-        //Context.RightLegIkConstraint.data.target.transform.position = Vector3.MoveTowards(
-        //    Context.RightLegIkConstraint.data.target.transform.position,
-        //    Context.FurthestGrabPointFromRightHip,
-        //    Time.deltaTime
+        //    speed
         //);
 
+        //yield return SmoothMoveCoroutine(
+        //    Context.RightLegIkConstraint.data.target.transform,
+        //    Context.FurthestGrabPointFromRightHip,
+        //    speed
+        //);
 
-    }
-     private  Task SmoothTransitionToTargetPosition(Transform target, Vector3 targetPosition, float duration)
-    {
-        Vector3 startPosition = target.position;
-        float elapsedTime = 0f;
-        while (elapsedTime < duration)
-        {
-            target.position = Vector3.Lerp(startPosition, targetPosition, elapsedTime / duration);
-            elapsedTime += Time.deltaTime;
-             // Yield control back to the caller until the next frame
-        }
-        target.position = targetPosition; // Ensure it ends at the exact target position
-        return Task.CompletedTask;
+        ikSequenceRoutine = null;
     }
 
 
+   
+    #endregion
 }

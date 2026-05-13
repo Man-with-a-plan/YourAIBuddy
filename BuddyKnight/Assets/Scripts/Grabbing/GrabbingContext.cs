@@ -35,7 +35,7 @@ public class GrabbingContext
         _rootTransform = rootTransform;
     }
 
-    public ChainIKConstraint LeftIkConstraint => _leftIkConstraintChain;
+    public  ChainIKConstraint LeftIkConstraint => _leftIkConstraintChain;
     public ChainIKConstraint RightIkConstraint => _rightIkConstraintChain;
     public TwoBoneIKConstraint LeftLegIkConstraint => _leftIkConstraint;
     public TwoBoneIKConstraint RightLegIkConstraint => _rightIkConstraint;
@@ -63,17 +63,18 @@ public class GrabbingContext
 
 
     //to debug which grab point is being grabbed
-    public Vector3 FurthestGrabPointFromLeftShoulder { get; private set; } = Vector3.positiveInfinity;
-    public Vector3 FurthestGrabPointFromRightShoulder { get; private set; } = Vector3.positiveInfinity;
-    public Vector3 FurthestGrabPointFromLeftHip { get; private set; } = Vector3.positiveInfinity;
-    public Vector3 FurthestGrabPointFromRightHip { get; private set; } = Vector3.positiveInfinity;
+    public Vector3 FurthestGrabPointFromLeftShoulder { get; private set; } 
+    public Vector3 FurthestGrabPointFromRightShoulder { get; private set; } 
+    public Vector3 FurthestGrabPointFromLeftHip { get; private set; } 
+    public Vector3 FurthestGrabPointFromRightHip { get; private set; } 
 
     //To optimise can change to Vector3
     protected GameObject leftHandGrab, rightHandGrab;
     public Vector3 Normal;
-    
 
-    
+    public MonoBehaviour Owner;
+    public GrabbingStateMachine StateMachine;
+
     public void SetClosestPoint(List<GameObject> ListOfClosestGrabPoints, RigCollisionHandler.BodySide limb)
     {
        
@@ -104,10 +105,12 @@ public class GrabbingContext
                 case RigCollisionHandler.BodySide.LeftArm:
                     FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
                     CurrentlyGrabbing["LeftHand"] = leftHandGrab;
+                    Debug.Log("Left hand grab point: " + FurthestGrabPointFromLeftShoulder);
                     break;
                 case RigCollisionHandler.BodySide.RightArm:
                     FurthestGrabPointFromRightShoulder = leftHandGrab.transform.position;
                     CurrentlyGrabbing["RightHand"] = leftHandGrab;
+                    Debug.Log("Right hand grab point: " + FurthestGrabPointFromRightShoulder);
                     break;
                 case RigCollisionHandler.BodySide.RightLeg:
                     FurthestGrabPointFromRightHip = leftHandGrab.transform.position;

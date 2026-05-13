@@ -5,7 +5,7 @@ public class SearchState:GrabbingState
 {
     public SearchState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
-        GrabbingContext Context = context;
+       // GrabbingContext Context = context;
     }
     public override void EnterState()
     {

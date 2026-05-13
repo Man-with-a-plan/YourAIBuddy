@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
 using UnityEngine;
@@ -14,6 +15,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     }
 
     private GrabbingContext _context;
+    
     public Dictionary<string, GameObject> CurrentlyGrabbing => _context.CurrentlyGrabbing;
 
     [SerializeField] private TwoBoneIKConstraint _leftIkConstraint;
@@ -53,8 +55,9 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         _context.CurrentlyGrabbing["RightLeg"] = new GameObject();
       //  _context.Normal = GetPlaneNormal();
         InitializeStates();
-       
-      
+       _context.Owner = this;
+       _context.StateMachine = this;
+
     }
 
     private void ValidateConstraints()
@@ -79,7 +82,18 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     {
         return _context.GetPlaneNormal();
     }
-    
 
+    public Coroutine RunCoroutine(IEnumerator routine)
+    {
+        return StartCoroutine(routine);
+    }
+
+    public void StopRunningCoroutine(Coroutine routine)
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+        }
+    }
 
 }

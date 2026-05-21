@@ -98,7 +98,7 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
-        private bool isClimbingLadder;
+        
         private Vector3 lastGrabLadderDirection;
 
         // timeout deltatime
@@ -122,8 +122,8 @@ namespace StarterAssets
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
         private Transform _climbingNowThisLadder;
-
         private const float _threshold = 0.01f;
+        public bool isClimbingLadder;
 
         private bool _hasAnimator;
       private  Vector3 toCenter = new Vector3();
@@ -194,7 +194,20 @@ namespace StarterAssets
             _animIDClimbing = Animator.StringToHash("Climbing");
             _animIDFellDown = Animator.StringToHash("FellDown");
         }
+        private Collider[] GetObjectsInGroundCheckSphere()
+        {
+            // Calculate sphere position with offset
+            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
 
+            // Use OverlapSphere to get all colliders within the sphere
+            Collider[] collidersInSphere = Physics.OverlapSphere(
+                spherePosition,
+                GroundedRadius,
+                GroundLayers,
+                QueryTriggerInteraction.Ignore);
+
+            return collidersInSphere;
+        }
         private void GroundedCheck()
         {
             if (!isClimbingLadder)
@@ -204,6 +217,20 @@ namespace StarterAssets
                     transform.position.z);
                 Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
                     QueryTriggerInteraction.Ignore);
+
+                // Debug: Log objects detected in ground check sphere
+                if (Grounded)
+                {
+                    Collider[] groundObjects = GetObjectsInGroundCheckSphere();
+                    if (groundObjects.Length > 0)
+                    {
+                        Debug.Log($"Ground objects detected: {groundObjects.Length}");
+                        foreach (Collider col in groundObjects)
+                        {
+                            Debug.Log($"Ground collider: {col.gameObject.name}", col.gameObject);
+                        }
+                    }
+                }
                 // update animator if using character
                 if (_hasAnimator)
                 {
@@ -252,7 +279,7 @@ namespace StarterAssets
             {
                 isClimbingLadder = true;
               
-                
+
                 _animator.SetBool(_animIDClimbing, isClimbingLadder);
                 
             }
@@ -262,6 +289,7 @@ namespace StarterAssets
         private void DropLadder()
         {
             isClimbingLadder = false;
+         
             _animator.SetBool(_animIDClimbing, isClimbingLadder);
         }
         private Vector3 GetCenterVector()
@@ -316,23 +344,6 @@ namespace StarterAssets
             Gizmos.DrawLine(GetCenter(), GetCenter() + ContextOfLimbPositions.GetPlaneNormal());
 
         }
-
-      
-        private void RotateAroundCenter(Quaternion targetRotation)
-        {
-            Vector3 worldCenter = transform.position + transform.TransformDirection(_controller.center);
-
-            // Get the offset from center to the transform's pivot
-            Vector3 offsetFromCenter = transform.position - worldCenter;
-
-            // Rotate the offset by the target rotation
-            Vector3 rotatedOffset = targetRotation * offsetFromCenter;
-
-            // Apply new position and rotation
-           // transform.position = worldCenter + rotatedOffset;
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime *5f);
-        }
-
 
         private void Move()
         {
@@ -438,7 +449,7 @@ namespace StarterAssets
  
                     _verticalVelocity = 0f;
                     Grounded = true;
-                    _speed = targetSpeed;
+                _speed = targetSpeed;
 
                 Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
                 Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
@@ -461,7 +472,7 @@ namespace StarterAssets
                 if (ContextOfLimbPositions.GetPlaneNormal() != planeNormal)
                 {
                     // Smoothly snap to wall
-                    float desiredDistance = 0.5f;
+                    float desiredDistance = 0.3f;
 
                     Vector3 targetPosition = GetCenter() - planeNormal * desiredDistance;
 
@@ -485,7 +496,6 @@ namespace StarterAssets
 
                 }
 
-                //  RotationOnLadder(sideways, _input.move.x);
 
 
             }
@@ -522,29 +532,6 @@ namespace StarterAssets
             
         }
 
-        private void RotationOnLadder(Vector3 sideways, float inputDirectionX)
-        {
-
-            
-            //rotation code
-            Vector3 directionToCenter = GetCenterVector();
-            Debug.DrawRay(transform.position + Vector3.up, directionToCenter, Color.red);
-            Vector3 desiredDirection = sideways * inputDirectionX;
-            Debug.DrawRay(transform.position, desiredDirection, Color.yellow);
-            Quaternion targetRotation = Quaternion.LookRotation(directionToCenter, transform.up);
-
-
-            if (desiredDirection.sqrMagnitude > 0.001f)
-            {
-
-                RotateAroundCenter(targetRotation);
-
-            }
-        }
-
-
-
-
         private void JumpAndGravity()
         {
             if (Grounded)
@@ -568,9 +555,10 @@ namespace StarterAssets
                 // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
+                    Debug.Log("Jumping");
                     //Jump from one ladder to another
-                    if(isClimbingLadder == true) {
-                        _verticalVelocity = _verticalVelocity * 2;
+                    if (isClimbingLadder == true) {
+                        //_verticalVelocity = _verticalVelocity * 2;
                         isClimbingLadder = false;
                         _animator.SetBool(_animIDClimbing, false);
                     }

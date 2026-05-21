@@ -1,3 +1,4 @@
+using StarterAssets;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro.EditorUtilities;
@@ -10,7 +11,9 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     {
         Search,
         Approach,
-        Grab,
+        StartClimbing,
+        LeftGrab,
+        RightGrab,
         Reset,
     }
 
@@ -23,25 +26,46 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     [SerializeField] private MultiRotationConstraint _leftMultiRotConstraint;
     [SerializeField] private MultiRotationConstraint _rightMultiRotConstraint;
     [SerializeField] private CharacterController _characterController;
-
+    [SerializeField] private ThirdPersonController _thirdPersonController;
     [SerializeField] private ChainIKConstraint _leftIkConstraintChain;
     [SerializeField] private ChainIKConstraint _rightIkConstraintChain;
     [SerializeField] public float _reachDistance = 2f;
-    
-    
+
+   
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.blue;
-        if (_context != null && _context.FurthestGrabPointFromLeftShoulder != null)
+        if (_context.FurthestGrabPointFromLeftShoulder != null)
         {
+            for(int i = 0; i < _context.GrabPointsLeftArm.Count; i++)
+            {
+                Gizmos.DrawSphere(_context.GrabPointsLeftArm[i].transform.position, 0.1f);
+            }
+            for (int i = 0; i < _context.GrabPointsRightLeg.Count; i++)
+            {
+                Gizmos.DrawSphere(_context.GrabPointsRightLeg[i].transform.position, 0.1f);
+            }
+
             Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftShoulder, 0.3f);
+            Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftHip, 0.3f);
+            Debug.Log("LeftShoulder: " + _context.FurthestGrabPointFromLeftShoulder);
         }
         Gizmos.color = Color.red;
-        if (_context != null && _context.FurthestGrabPointFromRightShoulder != null)
+       
+        if (_context.FurthestGrabPointFromRightShoulder != null)
         {
+            for (int i = 0; i < _context.GrabPointsRightArm.Count; i++)
+            {
+                Gizmos.DrawSphere(_context.GrabPointsRightArm[i].transform.position, 0.1f);
+            }
+            for (int i = 0; i < _context.GrabPointsLeftLeg.Count; i++)
+            {
+                Gizmos.DrawSphere(_context.GrabPointsLeftLeg[i].transform.position, 0.1f);
+            }
             Gizmos.DrawSphere(_context.FurthestGrabPointFromRightShoulder, 0.3f);
-            
+            Gizmos.DrawSphere(_context.FurthestGrabPointFromRightHip, 0.3f);
+
         }
     
     }
@@ -51,14 +75,16 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         
         ValidateConstraints();
         _context = new GrabbingContext(_leftIkConstraintChain, _rightIkConstraintChain, _leftIkConstraint,_rightIkConstraint, _leftMultiRotConstraint, _rightMultiRotConstraint,
-            _characterController, transform.root);
-        _context.CurrentlyGrabbing["RightLeg"] = new GameObject();
+            _characterController, _thirdPersonController, transform.root);
+        //_context.CurrentlyGrabbing["RightLeg"] = new GameObject();
       //  _context.Normal = GetPlaneNormal();
         InitializeStates();
        _context.Owner = this;
        _context.StateMachine = this;
 
     }
+
+    
 
     private void ValidateConstraints()
     {
@@ -74,9 +100,11 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     {
         States.Add(EGrabbingState.Search, new SearchState(_context, EGrabbingState.Search));
         States.Add(EGrabbingState.Approach, new ApproachState(_context, EGrabbingState.Approach));
-        States.Add(EGrabbingState.Grab, new GrabState(_context, EGrabbingState.Grab));
+        States.Add(EGrabbingState.StartClimbing, new StartClimbingState(_context, EGrabbingState.StartClimbing));
+        States.Add(EGrabbingState.LeftGrab, new LeftHandGrabState(_context, EGrabbingState.LeftGrab));
+        States.Add(EGrabbingState.RightGrab, new RightHandGrabState(_context, EGrabbingState.RightGrab));
         States.Add(EGrabbingState.Reset, new ResetState(_context, EGrabbingState.Reset));
-        CurrentState = States[EGrabbingState.Search];
+        CurrentState = States[EGrabbingState.Reset];
     }
     public Vector3 GetPlaneNormal()
     {

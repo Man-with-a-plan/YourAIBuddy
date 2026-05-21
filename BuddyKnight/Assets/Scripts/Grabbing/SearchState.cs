@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class SearchState:GrabbingState
 {
+   private float elapsedTime = 0f;
+    private float resetDuration = 2f;
     public SearchState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
        // GrabbingContext Context = context;
@@ -23,14 +25,26 @@ public class SearchState:GrabbingState
     }
     public override void UpdateState()
     {
+
         SetPointsForEachLimb();
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm);
 
-        UpdateIkTargetPositionTracking();
 
+
+
+        elapsedTime += Time.deltaTime;
+     
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
-       return StateKey;
+            if (Context.CurrentlyGrabbing.Count > 0)
+            {
+                Debug.Log(Context.CurrentlyGrabbing.Count);
+           
+           
+            return GrabbingStateMachine.EGrabbingState.Approach;
+            }
+        return StateKey;
     }
 
     public override void OnTriggerEnter(Collider other)

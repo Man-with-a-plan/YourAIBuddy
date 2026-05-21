@@ -87,17 +87,17 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
 
         Debug.Log(intersectingCollider);
 
-        SetIkTargetPosition();
+       // SetIkTargetPosition();
     }
 
-    protected void UpdateIkTargetPositionTracking()
+    protected void UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide limb)
     {
-        SetIkTargetPosition();
+        SetIkTargetPosition(limb);
     }
 
     protected void ResetIkTargetPositionTracking(Collider intersectingCollider)
     {
-      
+
     }
 
     #endregion
@@ -127,96 +127,122 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
 
     #region IK Movement
 
-    private void SetIkTargetPosition()
+    private void SetIkTargetPosition(RigCollisionHandler.BodySide limb)
     {
         // Already running
         if (ikSequenceRoutine != null)
             return;
-
+        
         ikSequenceRoutine = Context.StateMachine.RunCoroutine(
-            MoveLimbsSequentially()
+            MoveLimbsSequentially(limb)
         );
     }
 
     private IEnumerator SmoothMoveCoroutine(
-     Transform targetArm,
-     Vector3 destinationArm,
-     Transform targetLeg,
-     Vector3 destinationLeg,
-     float speed)
+       Transform leftArmTransform,
+       Transform rightArmTransform,
+       Transform leftLegTransform,
+       Transform rightLegTransform,
+       Vector3 destinationArm,
+       Vector3 destinationLeg,
+       RigCollisionHandler.BodySide bodySide,
+       float speed)
     {
-        if (destinationArm == Vector3.zero)
+        // Determine which limbs to move based on bodySide
+        Transform movingArm;
+        Transform movingLeg;
+        Transform stillArm;
+        Transform stillLeg;
+
+        if (bodySide == RigCollisionHandler.BodySide.LeftArm)
         {
-            Debug.LogWarning($"Destination is zero for {targetArm.name}, skipping movement.");
+            movingArm = leftArmTransform;
+            movingLeg = rightLegTransform;
+            stillArm = rightArmTransform;
+            stillLeg = leftLegTransform;
+        }
+        else // RightArm
+        {
+            movingArm = rightArmTransform;
+            movingLeg = leftLegTransform;
+            stillArm = leftArmTransform;
+            stillLeg = rightLegTransform;
+        }
+
+        if (destinationArm == Vector3.zero || destinationLeg == Vector3.zero)
+        {
+            Debug.LogWarning($"Destination is zero for arm or leg, skipping movement.");
             yield break;
         }
 
-        Vector3 startPosition = targetArm.position;
+        Vector3 startPositionArm = movingArm.position;
+        Vector3 startPositionLeg = movingLeg.position;
 
-        float journeyLength = Vector3.Distance(startPosition, destinationArm);
+        float journeyLengthArm = Vector3.Distance(startPositionArm, destinationArm);
+        float journeyLengthLeg = Vector3.Distance(startPositionLeg, destinationLeg);
 
-        if (journeyLength < 0.001f)
+        if (journeyLengthArm < 0.001f && journeyLengthLeg < 0.001f)
             yield break;
 
         float elapsed = 0f;
 
-        // Controls how high the arc goes
-        float arcHeight = 0.25f;
-
         while (elapsed < 1f)
         {
-            
-            elapsed += (speed / journeyLength) * Time.deltaTime;
+            float armSpeed = journeyLengthArm > 0.001f ? (speed / journeyLengthArm) * Time.deltaTime : 0f;
+            float legSpeed = journeyLengthLeg > 0.001f ? (speed / journeyLengthLeg) * Time.deltaTime : 0f;
 
-            // Base linear interpolation
-            Vector3 position = Vector3.Lerp(
-                startPosition,
-                destinationArm,
-                elapsed
-            );
+            elapsed += Mathf.Max(armSpeed, legSpeed);
 
-            // Arc motion (parabola)
-            float heightOffset = 4f * arcHeight * elapsed * (1f - elapsed);
+            // Move arm
+            if (journeyLengthArm > 0.001f)
+            {
+                float armElapsed = Mathf.Min(elapsed * journeyLengthArm / Mathf.Max(journeyLengthArm, journeyLengthLeg), 1f);
+                Vector3 armPosition = Vector3.Lerp(startPositionArm, destinationArm, armElapsed);
+                movingArm.position = armPosition;
+            }
 
-            position += Vector3.up * heightOffset;
-
-            targetArm.position = position;
+            // Move leg
+            if (journeyLengthLeg > 0.001f)
+            {
+                float legElapsed = Mathf.Min(elapsed * journeyLengthLeg / Mathf.Max(journeyLengthArm, journeyLengthLeg), 1f);
+                Vector3 legPosition = Vector3.Lerp(startPositionLeg, destinationLeg, legElapsed);
+                movingLeg.position = legPosition;
+            }
 
             yield return null;
         }
 
-        targetLeg.position = destinationLeg;
+        movingArm.position = destinationArm;
+        movingLeg.position = destinationLeg;
+        stillArm.position = stillArm.position;
+        stillLeg.position = stillLeg.position;
     }
 
-    private IEnumerator MoveLimbsSequentially()
+    private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb)
     {
-        float speed = 2f;
+        float speed = 1.5f;
 
+        // Move left arm and right leg simultaneously
         yield return SmoothMoveCoroutine(
             Context.LeftIkConstraint.data.target.transform,
-            Context.FurthestGrabPointFromLeftShoulder,
-            Context.RightLegIkConstraint.data.target.transform,
-            Context.FurthestGrabPointFromRightHip,
-            speed
-        );
-
-        yield return SmoothMoveCoroutine(
             Context.RightIkConstraint.data.target.transform,
-            Context.FurthestGrabPointFromRightShoulder,
             Context.LeftLegIkConstraint.data.target.transform,
-            Context.FurthestGrabPointFromLeftHip,
+            Context.RightLegIkConstraint.data.target.transform,
+            Context.FurthestGrabPointFromLeftShoulder,
+            Context.FurthestGrabPointFromRightHip,
+            limb,
             speed
         );
 
+        //// Move right arm and left leg simultaneously
         //yield return SmoothMoveCoroutine(
+        //    Context.LeftIkConstraint.data.target.transform,
+        //    Context.RightIkConstraint.data.target.transform,
         //    Context.LeftLegIkConstraint.data.target.transform,
-        //    Context.FurthestGrabPointFromLeftHip,
-        //    speed
-        //);
-
-        //yield return SmoothMoveCoroutine(
         //    Context.RightLegIkConstraint.data.target.transform,
-        //    Context.FurthestGrabPointFromRightHip,
+        //    Context.FurthestGrabPointFromRightShoulder,
+        //    Context.FurthestGrabPointFromLeftHip,
+        //    RigCollisionHandler.BodySide.RightArm,
         //    speed
         //);
 
@@ -224,6 +250,6 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
     }
 
 
-   
+
     #endregion
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 public class StartClimbingState : GrabbingState
 {
     private float elapsedTime = 0f;
-    private float approachDuration = 5f;
+    private float approachDuration = 1f;
     private float approachWeight = 1f;
     public StartClimbingState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
@@ -29,11 +29,11 @@ public class StartClimbingState : GrabbingState
         Debug.Log("GrabStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm);
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
-        if (elapsedTime/approachDuration == 1)
+        if (elapsedTime/approachDuration >= 1)
         {
             return GrabbingStateMachine.EGrabbingState.LeftGrab;
         }

@@ -4,7 +4,7 @@ public class ApproachState:GrabbingState
 {
    private float elapsedTime = 0f;
     private float approachDuration = 3f;
-    private float approachWeight = 1f;
+    private float approachWeight = 0.5f;
     public ApproachState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
         GrabbingContext Context = context;
@@ -29,12 +29,12 @@ public class ApproachState:GrabbingState
 
         Context.LeftIkConstraint.weight = Mathf.Lerp(Context.LeftIkConstraint.weight, approachWeight, elapsedTime / approachDuration);
         Context.RightIkConstraint.weight = Mathf.Lerp(Context.RightIkConstraint.weight, approachWeight, elapsedTime / approachDuration);
-        Context.LeftLegIkConstraint.weight = Mathf.Lerp(Context.LeftLegIkConstraint.weight, approachWeight, elapsedTime / approachDuration);
+       // Context.LeftLegIkConstraint.weight = Mathf.Lerp(Context.LeftLegIkConstraint.weight, approachWeight, elapsedTime / approachDuration);
        // Context.RightLegIkConstraint.weight = Mathf.Lerp(Context.RightLegIkConstraint.weight, approachWeight, elapsedTime / approachDuration);
         Debug.Log("ApproachStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm);
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, 1.5f);
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {

@@ -2,27 +2,29 @@ using UnityEngine;
 
 public class LeftHandGrabState : GrabbingState
 {
-  
+    private float elapsedTime = 0f;
+    private float approachDuration = 0.5f;
     public LeftHandGrabState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
         //GrabbingContext Context = context;
     }
     public override void EnterState()
     {
+        elapsedTime = 0f;
         SetPointsForEachLimb();
        
-        Debug.Log("GrabStateEntered");
+        Debug.Log("LeftGrabStateEntered");
     }
     public override void ExitState() { 
-        Debug.Log("GrabStateIsExited");
+        Debug.Log("LeftGrabStateIsExited");
     }
     public override void UpdateState()
     {
-        
-        Debug.Log("GrabStateIsUpdating");
+        elapsedTime += Time.deltaTime;
+        Debug.Log("LeftGrabStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm);
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
@@ -30,8 +32,12 @@ public class LeftHandGrabState : GrabbingState
         {
             return GrabbingStateMachine.EGrabbingState.Reset;
         }
+        if(elapsedTime >= approachDuration)
+        {
+            return GrabbingStateMachine.EGrabbingState.RightGrab;
+        }
 
-        return StateKey;
+            return StateKey;
         return GrabbingStateMachine.EGrabbingState.Search;
     }
     public override void OnTriggerEnter(Collider other)

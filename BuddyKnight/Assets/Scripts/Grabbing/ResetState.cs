@@ -15,8 +15,8 @@ public class ResetState:GrabbingState
 
     public override void EnterState()
     {
-         //RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
-         //RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
+         RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
+         RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
         _elapsedTime = 0;
         Debug.Log("ResetIsentered");
         Context.LeftLegIkConstraint.weight = 0f;
@@ -25,6 +25,7 @@ public class ResetState:GrabbingState
         Context.RightIkConstraint.weight = 0f;
         Context.RightMultiRotationConstraint.weight = 0f;
         Context.LeftMultiRotationConstraint.weight = 0f;
+       Context.ResetGrabPoints();
 
     }
 

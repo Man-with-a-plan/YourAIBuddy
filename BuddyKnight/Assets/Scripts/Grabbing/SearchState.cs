@@ -26,9 +26,7 @@ public class SearchState:GrabbingState
     public override void UpdateState()
     {
 
-        SetPointsForEachLimb();
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm);
-
+        
 
 
 
@@ -39,7 +37,7 @@ public class SearchState:GrabbingState
     {
             if (Context.CurrentlyGrabbing.Count > 0)
             {
-                Debug.Log(Context.CurrentlyGrabbing.Count);
+                Debug.Log(Context.CurrentlyGrabbing.Count + " <--- Grabbing");
            
            
             return GrabbingStateMachine.EGrabbingState.Approach;

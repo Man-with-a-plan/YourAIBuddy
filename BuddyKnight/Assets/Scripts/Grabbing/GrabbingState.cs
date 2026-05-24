@@ -90,9 +90,9 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
        // SetIkTargetPosition();
     }
 
-    protected void UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide limb)
+    protected void UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide limb, float speed)
     {
-        SetIkTargetPosition(limb);
+        SetIkTargetPosition(limb, speed);
     }
 
     protected void ResetIkTargetPositionTracking(Collider intersectingCollider)
@@ -127,26 +127,26 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
 
     #region IK Movement
 
-    private void SetIkTargetPosition(RigCollisionHandler.BodySide limb)
+    private void SetIkTargetPosition(RigCollisionHandler.BodySide limb, float speed)
     {
         // Already running
         if (ikSequenceRoutine != null)
             return;
         
         ikSequenceRoutine = Context.StateMachine.RunCoroutine(
-            MoveLimbsSequentially(limb)
+            MoveLimbsSequentially(limb, speed)
         );
     }
 
     private IEnumerator SmoothMoveCoroutine(
-       Transform leftArmTransform,
-       Transform rightArmTransform,
-       Transform leftLegTransform,
-       Transform rightLegTransform,
-       Vector3 destinationArm,
-       Vector3 destinationLeg,
-       RigCollisionHandler.BodySide bodySide,
-       float speed)
+        Transform leftArmTransform,
+        Transform rightArmTransform,
+        Transform leftLegTransform,
+        Transform rightLegTransform,
+        Vector3 destinationArm,
+        Vector3 destinationLeg,
+        RigCollisionHandler.BodySide bodySide,
+        float movementDuration)
     {
         // Determine which limbs to move based on bodySide
         Transform movingArm;
@@ -178,49 +178,46 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         Vector3 startPositionArm = movingArm.position;
         Vector3 startPositionLeg = movingLeg.position;
 
-        float journeyLengthArm = Vector3.Distance(startPositionArm, destinationArm);
-        float journeyLengthLeg = Vector3.Distance(startPositionLeg, destinationLeg);
-
-        if (journeyLengthArm < 0.001f && journeyLengthLeg < 0.001f)
+        // Check if limbs are already at destination
+        if (Vector3.Distance(startPositionArm, destinationArm) < 0.001f &&
+            Vector3.Distance(startPositionLeg, destinationLeg) < 0.001f)
             yield break;
 
-        float elapsed = 0f;
+        float elapsedTime = 0f;
+        // Fixed one second movement
 
-        while (elapsed < 1f)
+        Vector3 stillArmWorldPos = stillArm.position;
+        Vector3 stillLegWorldPos = stillLeg.position;
+
+        Quaternion stillArmWorldRot = stillArm.rotation;
+        Quaternion stillLegWorldRot = stillLeg.rotation;
+
+        while (elapsedTime < movementDuration)
         {
-            float armSpeed = journeyLengthArm > 0.001f ? (speed / journeyLengthArm) * Time.deltaTime : 0f;
-            float legSpeed = journeyLengthLeg > 0.001f ? (speed / journeyLengthLeg) * Time.deltaTime : 0f;
-
-            elapsed += Mathf.Max(armSpeed, legSpeed);
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / movementDuration);
 
             // Move arm
-            if (journeyLengthArm > 0.001f)
-            {
-                float armElapsed = Mathf.Min(elapsed * journeyLengthArm / Mathf.Max(journeyLengthArm, journeyLengthLeg), 1f);
-                Vector3 armPosition = Vector3.Lerp(startPositionArm, destinationArm, armElapsed);
-                movingArm.position = armPosition;
-            }
+            movingArm.position = Vector3.Lerp(startPositionArm, destinationArm, t);
 
             // Move leg
-            if (journeyLengthLeg > 0.001f)
-            {
-                float legElapsed = Mathf.Min(elapsed * journeyLengthLeg / Mathf.Max(journeyLengthArm, journeyLengthLeg), 1f);
-                Vector3 legPosition = Vector3.Lerp(startPositionLeg, destinationLeg, legElapsed);
-                movingLeg.position = legPosition;
-            }
+            movingLeg.position = Vector3.Lerp(startPositionLeg, destinationLeg, t);
+
+            // Keep still limbs fixed in WORLD SPACE
+            stillArm.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
+            stillLeg.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
 
             yield return null;
         }
 
+        // Ensure final positions are exact
         movingArm.position = destinationArm;
         movingLeg.position = destinationLeg;
-        stillArm.position = stillArm.position;
-        stillLeg.position = stillLeg.position;
     }
 
-    private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb)
+    private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb, float speed)
     {
-        float speed = 1.5f;
+       
 
         // Move left arm and right leg simultaneously
         yield return SmoothMoveCoroutine(

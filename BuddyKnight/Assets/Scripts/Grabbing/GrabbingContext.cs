@@ -216,5 +216,13 @@ public class GrabbingContext
         }
 
     }
+    public void ResetGrabPoints()
+    {
+        LeftIkConstraint.transform.position = Vector3.zero;
+        RightIkConstraint.transform.position = Vector3.zero;
+        LeftLegIkConstraint.transform.position = Vector3.zero;
+        RightLegIkConstraint.transform.position = Vector3.zero;
+        CurrentlyGrabbing.Clear();
+    }
 
 }

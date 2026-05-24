@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.UI;
 using UnityEngine;
 
 public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingState>
@@ -129,10 +130,9 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
 
     private void SetIkTargetPosition(RigCollisionHandler.BodySide limb, float speed)
     {
-        // Already running
         if (ikSequenceRoutine != null)
             return;
-        
+
         ikSequenceRoutine = Context.StateMachine.RunCoroutine(
             MoveLimbsSequentially(limb, speed)
         );
@@ -148,11 +148,15 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         RigCollisionHandler.BodySide bodySide,
         float movementDuration)
     {
-        // Determine which limbs to move based on bodySide
-        Transform movingArm;
-        Transform movingLeg;
-        Transform stillArm;
-        Transform stillLeg;
+        // --- Validate inputs ---
+        if (destinationArm == Vector3.zero || destinationLeg == Vector3.zero)
+        {
+            Debug.LogWarning("Destination is zero for arm or leg, skipping movement.");
+            yield break;
+        }
+
+        // --- Assign moving vs still limbs ---
+        Transform movingArm, movingLeg, stillArm, stillLeg;
 
         if (bodySide == RigCollisionHandler.BodySide.LeftArm)
         {
@@ -161,7 +165,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
             stillArm = rightArmTransform;
             stillLeg = leftLegTransform;
         }
-        else // RightArm
+        else
         {
             movingArm = rightArmTransform;
             movingLeg = leftLegTransform;
@@ -169,50 +173,69 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
             stillLeg = rightLegTransform;
         }
 
-        if (destinationArm == Vector3.zero || destinationLeg == Vector3.zero)
-        {
-            Debug.LogWarning($"Destination is zero for arm or leg, skipping movement.");
-            yield break;
-        }
+        // --- Early out if already at destination ---
+        Vector3 startArm = movingArm.position;
+        Vector3 startLeg = movingLeg.position;
 
-        Vector3 startPositionArm = movingArm.position;
-        Vector3 startPositionLeg = movingLeg.position;
-
-        // Check if limbs are already at destination
-        if (Vector3.Distance(startPositionArm, destinationArm) < 0.001f &&
-            Vector3.Distance(startPositionLeg, destinationLeg) < 0.001f)
+        if (Vector3.Distance(startArm, destinationArm) < 0.001f &&
+            Vector3.Distance(startLeg, destinationLeg) < 0.001f)
             yield break;
 
-        float elapsedTime = 0f;
-        // Fixed one second movement
+        // --- Anchor still limbs in world space ---
+        // We track the CHARACTER root so we can compensate for body movement each frame.
+        Transform root = Context.CharacterController.transform; // adjust if your root is a different reference
+        Vector3 prevRootPos = root.position;
+        Quaternion prevRootRot = root.rotation;
 
         Vector3 stillArmWorldPos = stillArm.position;
-        Vector3 stillLegWorldPos = stillLeg.position;
-
         Quaternion stillArmWorldRot = stillArm.rotation;
+        Vector3 stillLegWorldPos = stillLeg.position;
         Quaternion stillLegWorldRot = stillLeg.rotation;
+
+        // --- Move loop ---
+        float elapsedTime = 0f;
 
         while (elapsedTime < movementDuration)
         {
             elapsedTime += Time.deltaTime;
             float t = Mathf.Clamp01(elapsedTime / movementDuration);
 
-            // Move arm
-            movingArm.position = Vector3.Lerp(startPositionArm, destinationArm, t);
+            // Optional: replace with a curve for snappier feel
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-            // Move leg
-            movingLeg.position = Vector3.Lerp(startPositionLeg, destinationLeg, t);
+            // Move the active limbs toward their destinations
+            movingArm.position = Vector3.Lerp(startArm, destinationArm, smoothT);
+            movingLeg.position = Vector3.Lerp(startLeg, destinationLeg, smoothT);
 
-            // Keep still limbs fixed in WORLD SPACE
+            // --- Compensate still limbs for root movement ---
+            // If the character moved or rotated this frame, offset the anchored
+            // world positions by the same delta so they stay planted.
+            Vector3 rootPosDelta = root.position - prevRootPos;
+            Quaternion rootRotDelta = root.rotation * Quaternion.Inverse(prevRootRot);
+
+            stillArmWorldPos = rootRotDelta * (stillArmWorldPos - prevRootPos) + root.position + rootPosDelta * 0f;
+            stillLegWorldPos = rootRotDelta * (stillLegWorldPos - prevRootPos) + root.position + rootPosDelta * 0f;
+
+            // Simpler version — use this if you only translate (no root rotation):
+            // stillArmWorldPos += rootPosDelta;
+            // stillLegWorldPos += rootPosDelta;
+
             stillArm.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
             stillLeg.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
+
+            prevRootPos = root.position;
+            prevRootRot = root.rotation;
 
             yield return null;
         }
 
-        // Ensure final positions are exact
+        // --- Snap to exact final positions ---
         movingArm.position = destinationArm;
         movingLeg.position = destinationLeg;
+
+        // Re-anchor still limbs one final time
+        stillArm.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
+        stillLeg.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
     }
 
     private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb, float speed)

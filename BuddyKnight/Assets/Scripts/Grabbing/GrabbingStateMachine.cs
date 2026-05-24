@@ -81,6 +81,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         InitializeStates();
        _context.Owner = this;
        _context.StateMachine = this;
+        _context.SetOriginalLimbPositions();
 
     }
 

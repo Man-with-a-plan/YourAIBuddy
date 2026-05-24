@@ -26,7 +26,9 @@ public class SearchState:GrabbingState
     public override void UpdateState()
     {
 
-        
+        SetPointsForEachLimb();
+
+
 
 
 

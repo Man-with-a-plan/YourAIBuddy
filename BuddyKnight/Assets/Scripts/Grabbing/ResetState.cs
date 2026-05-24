@@ -11,22 +11,24 @@ public class ResetState:GrabbingState
     
 
     }
-  
+ 
 
     public override void EnterState()
     {
-         RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
+       
+        RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
          RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
         _elapsedTime = 0;
         Debug.Log("ResetIsentered");
+        
         Context.LeftLegIkConstraint.weight = 0f;
         Context.RightLegIkConstraint.weight = 0f;
         Context.LeftIkConstraint.weight = 0f;
         Context.RightIkConstraint.weight = 0f;
         Context.RightMultiRotationConstraint.weight = 0f;
         Context.LeftMultiRotationConstraint.weight = 0f;
-       Context.ResetGrabPoints();
 
+        Context.ResetGrabPoints();
     }
 
     public override void ExitState()
@@ -35,7 +37,8 @@ public class ResetState:GrabbingState
     }
     public override void UpdateState()
     {
-                _elapsedTime += Time.deltaTime;
+       
+        _elapsedTime += Time.deltaTime;
         Debug.Log("ResetStateIsUpdating");
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()

@@ -70,7 +70,11 @@ public class GrabbingContext
     public Vector3 FurthestGrabPointFromLeftShoulder { get; private set; }
     public Vector3 FurthestGrabPointFromRightShoulder { get; private set; } 
     public Vector3 FurthestGrabPointFromLeftHip { get; private set; } 
-    public Vector3 FurthestGrabPointFromRightHip { get; private set; } 
+    public Vector3 FurthestGrabPointFromRightHip { get; private set; }
+    public Transform OriginalLeftShoulder { get; private set; }
+    public Transform OriginalRightShoulder { get; private set; }
+    public Transform OriginalLeftHip { get; private set; }
+    public Transform OriginalRightHip { get; private set; }
 
     //To optimise can change to Vector3
     protected GameObject leftHandGrab, rightHandGrab;
@@ -216,12 +220,19 @@ public class GrabbingContext
         }
 
     }
+    public void SetOriginalLimbPositions()
+    {
+        OriginalLeftShoulder = LeftIkConstraint.transform.GetChild(0).transform;
+        OriginalRightShoulder = RightIkConstraint.transform.GetChild(0).transform;
+        OriginalLeftHip = LeftLegIkConstraint.transform.GetChild(0).transform;
+        OriginalRightHip = RightLegIkConstraint.transform.GetChild(0).transform;
+    }   
     public void ResetGrabPoints()
     {
-        LeftIkConstraint.transform.position = Vector3.zero;
-        RightIkConstraint.transform.position = Vector3.zero;
-        LeftLegIkConstraint.transform.position = Vector3.zero;
-        RightLegIkConstraint.transform.position = Vector3.zero;
+        LeftIkConstraint.transform.GetChild(0).position = OriginalLeftShoulder.position;
+        RightIkConstraint.transform.GetChild(0).position = OriginalRightShoulder.position;
+        LeftLegIkConstraint.transform.GetChild(0).position = OriginalLeftHip.position;
+        RightLegIkConstraint.transform.GetChild(0).position = OriginalRightHip.position;
         CurrentlyGrabbing.Clear();
     }
 

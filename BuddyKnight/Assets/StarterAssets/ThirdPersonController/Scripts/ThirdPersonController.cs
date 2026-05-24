@@ -423,22 +423,17 @@ namespace StarterAssets
                 }
 
                  
-
-              
                 //Reach the ground - drop the ladder
 
                 if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
                 {
-
                     float ladderFloorDropDist = .1f;
-                    Debug.Log("Its going down i shouting timber");
-
+                   
                     if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit floorRaycastHit, ladderFloorDropDist))
                     {
                         DropLadder();
                         Debug.Log("dropLadder");
                     }
-
                 }
                 //Drop the ladder if too hot
                 if (CanClimb == false)
@@ -446,66 +441,41 @@ namespace StarterAssets
                     DropLadder();
                     Debug.Log("too hot to climb");
                 }
- 
                     _verticalVelocity = 0f;
                     Grounded = true;
                 _speed = targetSpeed;
-
                 Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
                 Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
-
-                // Apply movement input along this direction
                 Vector3 sideways = Vector3.Cross(transform.up, planeNormal).normalized;
-
                 Vector3 move = sideways * _input.move.x
                              + Vector3.up * _input.move.y;
-
-                // 🔥 This fixes your exact issue
                 move = Vector3.ProjectOnPlane(move, planeNormal);
-
                 _controller.Move(move.normalized * (_speed * Time.deltaTime));
-
                 Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green, 2);
-
-
-
                 if (ContextOfLimbPositions.GetPlaneNormal() != planeNormal)
                 {
                     // Smoothly snap to wall
                     float desiredDistance = 0.3f;
-
                     Vector3 targetPosition = GetCenter() - planeNormal * desiredDistance;
-
                     targetPosition = targetPosition - transform.up * 1.5f;
                     //   targetPosition.y = transform.position.y;
-
                     transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 5f);
                     // Debug.Log("snapping to wall");
                     Debug.DrawRay(targetPosition, Vector3.up, Color.green, 3);
-
-                    // Smoothly rotate to align with the new plane normal
+                    // Smothly rotate to align with the new plane normal
                     planeNormal = ContextOfLimbPositions.GetPlaneNormal();
-
                     transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 5f);
-
                 }
                 else
                 {
                     // RotateAroundCenter(Quaternion.LookRotation(GetCenterVector(), Vector3.ProjectOnPlane(transform.up, planeNormal)));
-
-
                 }
-
-
-
             }
-
             else
             { // move the player
                 _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
                                  new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
             }
-
             // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is a move input rotate player when the player is moving
 
@@ -519,10 +489,6 @@ namespace StarterAssets
                     // rotate to face input direction relative to camera position
                     transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 }
-
-
-            
-
             // update animator if using character
             if (_hasAnimator)
                 {

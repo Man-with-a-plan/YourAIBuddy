@@ -67,7 +67,16 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
             Gizmos.DrawSphere(_context.FurthestGrabPointFromRightHip, 0.3f);
 
         }
-    
+        Gizmos.color = Color.green;
+        if (_context.OriginalLeftShoulder != null)
+        {
+            Gizmos.DrawSphere(_context.OriginalLeftShoulder, 0.3f);
+            Gizmos.DrawSphere(_context.OriginalLeftHip, 0.3f);
+            Gizmos.DrawSphere(_context.OriginalRightShoulder, 0.3f);
+            Gizmos.DrawSphere(_context.OriginalRightHip, 0.3f);
+
+        }
+
     }
 
     private void Awake()
@@ -81,7 +90,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         InitializeStates();
        _context.Owner = this;
        _context.StateMachine = this;
-        _context.SetOriginalLimbPositions();
+       _context.SetOriginalLimbPositions();
 
     }
 

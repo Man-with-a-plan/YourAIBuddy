@@ -10,15 +10,18 @@ public class RightHandGrabState : GrabbingState
     }
     public override void EnterState()
     {
-        Debug.Log("GrabStateEntered");
+                elapsedTime = 0f;
+        Debug.Log("RightGrabStateEntered");
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.RightArm, approachDuration);
     }
-    public override void ExitState() { Debug.Log("GrabStateIsExited"); }
+    public override void ExitState() { Debug.Log("RightGrabStateIsExited"); }
     public override void UpdateState()
     {
-        Debug.Log("GrabStateIsUpdating");
+        elapsedTime += Time.deltaTime;
+        Debug.Log("RightGrabStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.RightArm, approachDuration);
+        
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {
@@ -28,7 +31,7 @@ public class RightHandGrabState : GrabbingState
         }
         if (elapsedTime >= approachDuration)
         {
-            return GrabbingStateMachine.EGrabbingState.RightGrab;
+            return GrabbingStateMachine.EGrabbingState.LeftGrab;
         }
 
         return StateKey;

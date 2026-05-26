@@ -12,7 +12,7 @@ public class LeftHandGrabState : GrabbingState
     {
         elapsedTime = 0f;
         SetPointsForEachLimb();
-       
+        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
         Debug.Log("LeftGrabStateEntered");
     }
     public override void ExitState() { 
@@ -24,7 +24,7 @@ public class LeftHandGrabState : GrabbingState
         Debug.Log("LeftGrabStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
+        
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {

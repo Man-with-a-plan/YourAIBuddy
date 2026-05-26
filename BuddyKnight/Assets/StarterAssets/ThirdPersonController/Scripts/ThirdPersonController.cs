@@ -443,7 +443,7 @@ namespace StarterAssets
                 }
                     _verticalVelocity = 0f;
                     Grounded = true;
-                _speed = targetSpeed;
+                _speed = targetSpeed/2;
                 Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
                 Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
                 Vector3 sideways = Vector3.Cross(transform.up, planeNormal).normalized;
@@ -459,17 +459,18 @@ namespace StarterAssets
                     Vector3 targetPosition = GetCenter() - planeNormal * desiredDistance;
                     targetPosition = targetPosition - transform.up * 1.5f;
                     //   targetPosition.y = transform.position.y;
-                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 5f);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 2f);
                     // Debug.Log("snapping to wall");
                     Debug.DrawRay(targetPosition, Vector3.up, Color.green, 3);
                     // Smothly rotate to align with the new plane normal
                     planeNormal = ContextOfLimbPositions.GetPlaneNormal();
-                    transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 5f);
+                    transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 2f);
                 }
                 else
                 {
-                    // RotateAroundCenter(Quaternion.LookRotation(GetCenterVector(), Vector3.ProjectOnPlane(transform.up, planeNormal)));
+                     RotateAroundCenter(Quaternion.LookRotation(GetCenterVector(), Vector3.ProjectOnPlane(transform.up, planeNormal)));
                 }
+                
             }
             else
             { // move the player

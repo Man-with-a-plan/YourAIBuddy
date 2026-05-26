@@ -4,8 +4,13 @@ using UnityEngine;
 public class endtrigger : MonoBehaviour
 {
     public GameManager gameManager;
-     void OnTriggerEnter()
+   
+    void OnTriggerEnter()
     {
+       
+     
         gameManager.CompleteLevel();
     }
-}
+        
+    }
+

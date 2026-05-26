@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
-
+    [SerializeField] private int levelIndex;
     bool gamehasEnded = false;
 
     public AudioSource sfc;
@@ -21,9 +21,28 @@ public class GameManager : MonoBehaviour
    
     public void CompleteLevel()
     {
-        completeLevelUI.SetActive(true);
-        sfc.clip = sfx;
-        sfc.Play();
+        switch (levelIndex)
+        {
+            case 1:
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                break;
+            case 2:
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                break;
+            case 3:
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                break;
+            case 4:
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                break;
+            case 5:
+                completeLevelUI.SetActive(true);
+                sfc.clip = sfx;
+                sfc.Play();
+                EndGame();
+                break;
+        }
+                
     }
     public void EndGame()
     {

@@ -11,6 +11,7 @@ public class StartClimbingState : GrabbingState
     }
     public override void EnterState()
     {
+        elapsedTime = 0f;
         SetPointsForEachLimb();
 
         Debug.Log("GrabStateEntered");
@@ -29,7 +30,7 @@ public class StartClimbingState : GrabbingState
         Debug.Log("GrabStateIsUpdating");
         SetPointsForEachLimb();
 
-        UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
+  UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {

@@ -71,10 +71,10 @@ public class GrabbingContext
     public Vector3 FurthestGrabPointFromRightShoulder { get; private set; } 
     public Vector3 FurthestGrabPointFromLeftHip { get; private set; } 
     public Vector3 FurthestGrabPointFromRightHip { get; private set; }
-    public Transform OriginalLeftShoulder { get; private set; }
-    public Transform OriginalRightShoulder { get; private set; }
-    public Transform OriginalLeftHip { get; private set; }
-    public Transform OriginalRightHip { get; private set; }
+    public Vector3 OriginalLeftShoulder { get; private set; }
+    public Vector3 OriginalRightShoulder { get; private set; }
+    public Vector3 OriginalLeftHip { get; private set; }
+    public Vector3 OriginalRightHip { get; private set; }
 
     //To optimise can change to Vector3
     protected GameObject leftHandGrab, rightHandGrab;
@@ -222,18 +222,20 @@ public class GrabbingContext
     }
     public void SetOriginalLimbPositions()
     {
-        OriginalLeftShoulder = LeftIkConstraint.transform.GetChild(0).transform;
-        OriginalRightShoulder = RightIkConstraint.transform.GetChild(0).transform;
-        OriginalLeftHip = LeftLegIkConstraint.transform.GetChild(0).transform;
-        OriginalRightHip = RightLegIkConstraint.transform.GetChild(0).transform;
+        OriginalLeftShoulder = LeftIkConstraint.data.target.transform.localPosition;
+        OriginalRightShoulder = RightIkConstraint.data.target.transform.localPosition;
+        OriginalLeftHip = LeftLegIkConstraint.data.target.transform.localPosition;
+        OriginalRightHip = RightLegIkConstraint.data.target.transform.localPosition;
+        Debug.Log("Grab points are set to original positions.");
     }   
     public void ResetGrabPoints()
     {
-        LeftIkConstraint.transform.GetChild(0).position = OriginalLeftShoulder.position;
-        RightIkConstraint.transform.GetChild(0).position = OriginalRightShoulder.position;
-        LeftLegIkConstraint.transform.GetChild(0).position = OriginalLeftHip.position;
-        RightLegIkConstraint.transform.GetChild(0).position = OriginalRightHip.position;
+        LeftIkConstraint.data.target.transform.localPosition = OriginalLeftShoulder;
+        RightIkConstraint.data.target.transform.localPosition = OriginalRightShoulder;
+        LeftLegIkConstraint.data.target.transform.localPosition = OriginalLeftHip;
+        RightLegIkConstraint.data.target.transform.localPosition = OriginalRightHip;
         CurrentlyGrabbing.Clear();
+       
     }
 
 }

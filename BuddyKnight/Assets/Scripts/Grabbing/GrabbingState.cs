@@ -164,6 +164,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
             movingLeg = rightLegTransform;
             stillArm = rightArmTransform;
             stillLeg = leftLegTransform;
+            Debug.Log("Setting left arm and right leg to move");
         }
         else
         {
@@ -171,6 +172,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
             movingLeg = leftLegTransform;
             stillArm = leftArmTransform;
             stillLeg = rightLegTransform;
+            Debug.Log("Setting right arm and left leg to move");
         }
 
         // --- Early out if already at destination ---
@@ -180,6 +182,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         if (Vector3.Distance(startArm, destinationArm) < 0.001f &&
             Vector3.Distance(startLeg, destinationLeg) < 0.001f)
             yield break;
+
 
         // --- Anchor still limbs in world space ---
         // We track the CHARACTER root so we can compensate for body movement each frame.
@@ -241,30 +244,39 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
     private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb, float speed)
     {
        
+        if( limb == RigCollisionHandler.BodySide.LeftArm)
+        {
+            Debug.Log("Starting movement sequence for left arm and right leg");
+            // Move left arm and right leg simultaneously
+            yield return SmoothMoveCoroutine(
+                Context.LeftIkConstraint.data.target.transform,
+                Context.RightIkConstraint.data.target.transform,
+                Context.LeftLegIkConstraint.data.target.transform,
+                Context.RightLegIkConstraint.data.target.transform,
+                Context.FurthestGrabPointFromLeftShoulder,
+                Context.FurthestGrabPointFromRightHip,
+                limb,
+                speed
+            );
+        }
+        else
+        {
+            Debug.Log("Starting movement sequence for right arm and left leg");
+            // Move right arm and left leg simultaneously
+            yield return SmoothMoveCoroutine(
+                Context.LeftIkConstraint.data.target.transform,
+                Context.RightIkConstraint.data.target.transform,
+                Context.LeftLegIkConstraint.data.target.transform,
+                Context.RightLegIkConstraint.data.target.transform,
+                Context.FurthestGrabPointFromRightShoulder,
+                Context.FurthestGrabPointFromLeftHip,
+                RigCollisionHandler.BodySide.RightArm,
+                speed
+            );
+        }
+     
 
-        // Move left arm and right leg simultaneously
-        yield return SmoothMoveCoroutine(
-            Context.LeftIkConstraint.data.target.transform,
-            Context.RightIkConstraint.data.target.transform,
-            Context.LeftLegIkConstraint.data.target.transform,
-            Context.RightLegIkConstraint.data.target.transform,
-            Context.FurthestGrabPointFromLeftShoulder,
-            Context.FurthestGrabPointFromRightHip,
-            limb,
-            speed
-        );
-
-        //// Move right arm and left leg simultaneously
-        //yield return SmoothMoveCoroutine(
-        //    Context.LeftIkConstraint.data.target.transform,
-        //    Context.RightIkConstraint.data.target.transform,
-        //    Context.LeftLegIkConstraint.data.target.transform,
-        //    Context.RightLegIkConstraint.data.target.transform,
-        //    Context.FurthestGrabPointFromRightShoulder,
-        //    Context.FurthestGrabPointFromLeftHip,
-        //    RigCollisionHandler.BodySide.RightArm,
-        //    speed
-        //);
+        
 
         ikSequenceRoutine = null;
     }

@@ -4,9 +4,14 @@ public class LeftHandGrabState : GrabbingState
 {
     private float elapsedTime = 0f;
     private float approachDuration = 0.5f;
+    Vector3 stillArmWorldPos;
+    Quaternion stillArmWorldRot;
+    Vector3 stillLegWorldPos;
+    Quaternion stillLegWorldRot;
     public LeftHandGrabState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
         //GrabbingContext Context = context;
+      
     }
     public override void EnterState()
     {
@@ -14,6 +19,10 @@ public class LeftHandGrabState : GrabbingState
         SetPointsForEachLimb();
         UpdateIkTargetPositionTracking(RigCollisionHandler.BodySide.LeftArm, approachDuration);
         Debug.Log("LeftGrabStateEntered");
+         stillArmWorldPos = Context.RightIkConstraint.data.target.position;
+         stillArmWorldRot = Context.RightIkConstraint.data.target.rotation;
+         stillLegWorldPos = Context.LeftLegIkConstraint.data.target.position;
+         stillLegWorldRot = Context.LeftLegIkConstraint.data.target.rotation;
     }
     public override void ExitState() { 
         Debug.Log("LeftGrabStateIsExited");
@@ -23,8 +32,8 @@ public class LeftHandGrabState : GrabbingState
         elapsedTime += Time.deltaTime;
         Debug.Log("LeftGrabStateIsUpdating");
         SetPointsForEachLimb();
+        KeepStillLimbsInPlace(stillArmWorldPos, stillArmWorldRot, stillLegWorldPos, stillLegWorldRot, RigCollisionHandler.BodySide.LeftArm);
 
-        
     }
     public override GrabbingStateMachine.EGrabbingState GetNextState()
     {

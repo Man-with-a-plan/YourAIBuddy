@@ -326,24 +326,23 @@ namespace StarterAssets
             return centerPoint;
         }
 
-     
-       
-        private void OnDrawGizmos()
-        {
-            if (ContextOfLimbPositions == null || ContextOfLimbPositions.CurrentlyGrabbing.Count < 4)
-                return;
+   
+        //private void OnDrawGizmos()
+        //{
+        //    if (ContextOfLimbPositions == null || ContextOfLimbPositions.CurrentlyGrabbing.Count < 4)
+        //        return;
 
            
-            // Draw center point
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(GetCenter(), 0.1f);
+        //    // Draw center point
+        //    Gizmos.color = Color.magenta;
+        //    Gizmos.DrawSphere(GetCenter(), 0.1f);
             
-            // Draw normal vector
-            Gizmos.color = Color.cyan;
+        //    // Draw normal vector
+        //    Gizmos.color = Color.cyan;
 
-            Gizmos.DrawLine(GetCenter(), GetCenter() + ContextOfLimbPositions.GetPlaneNormal());
+        //    Gizmos.DrawLine(GetCenter(), GetCenter() + ContextOfLimbPositions.GetPlaneNormal());
 
-        }
+        //}
 
         private void Move()
         {
@@ -443,12 +442,13 @@ namespace StarterAssets
                 }
                     _verticalVelocity = 0f;
                     Grounded = true;
-                _speed = targetSpeed/2;
+                _speed = targetSpeed/2f;
                 Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
                 Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
                 Vector3 sideways = Vector3.Cross(transform.up, planeNormal).normalized;
                 Vector3 move = sideways * _input.move.x
                              + Vector3.up * _input.move.y;
+
                 move = Vector3.ProjectOnPlane(move, planeNormal);
                 _controller.Move(move.normalized * (_speed * Time.deltaTime));
                 Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green, 2);
@@ -459,18 +459,15 @@ namespace StarterAssets
                     Vector3 targetPosition = GetCenter() - planeNormal * desiredDistance;
                     targetPosition = targetPosition - transform.up * 1.5f;
                     //   targetPosition.y = transform.position.y;
-                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 2f);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 8f);
                     // Debug.Log("snapping to wall");
                     Debug.DrawRay(targetPosition, Vector3.up, Color.green, 3);
                     // Smothly rotate to align with the new plane normal
                     planeNormal = ContextOfLimbPositions.GetPlaneNormal();
-                    transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 2f);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 8f);
                 }
-                else
-                {
-                     RotateAroundCenter(Quaternion.LookRotation(GetCenterVector(), Vector3.ProjectOnPlane(transform.up, planeNormal)));
-                }
-                
+              
+
             }
             else
             { // move the player

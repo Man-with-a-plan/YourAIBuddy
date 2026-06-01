@@ -1,7 +1,6 @@
 using StarterAssets;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.Assertions;
@@ -33,51 +32,51 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
 
    
 
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.blue;
-        if (_context.FurthestGrabPointFromLeftShoulder != null)
-        {
-            for(int i = 0; i < _context.GrabPointsLeftArm.Count; i++)
-            {
-                Gizmos.DrawSphere(_context.GrabPointsLeftArm[i].transform.position, 0.1f);
-            }
-            for (int i = 0; i < _context.GrabPointsRightLeg.Count; i++)
-            {
-                Gizmos.DrawSphere(_context.GrabPointsRightLeg[i].transform.position, 0.1f);
-            }
+    //private void OnDrawGizmosSelected()
+    //{
+    //    Gizmos.color = Color.blue;
+    //    if (_context.FurthestGrabPointFromLeftShoulder != null)
+    //    {
+    //        for(int i = 0; i < _context.GrabPointsLeftArm.Count; i++)
+    //        {
+    //            Gizmos.DrawSphere(_context.GrabPointsLeftArm[i].transform.position, 0.1f);
+    //        }
+    //        for (int i = 0; i < _context.GrabPointsRightLeg.Count; i++)
+    //        {
+    //            Gizmos.DrawSphere(_context.GrabPointsRightLeg[i].transform.position, 0.1f);
+    //        }
 
-            Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftShoulder, 0.3f);
-            Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftHip, 0.3f);
-            Debug.Log("LeftShoulder: " + _context.FurthestGrabPointFromLeftShoulder);
-        }
-        Gizmos.color = Color.red;
+    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftShoulder, 0.3f);
+    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftHip, 0.3f);
+    //        Debug.Log("LeftShoulder: " + _context.FurthestGrabPointFromLeftShoulder);
+    //    }
+    //    Gizmos.color = Color.red;
        
-        if (_context.FurthestGrabPointFromRightShoulder != null)
-        {
-            for (int i = 0; i < _context.GrabPointsRightArm.Count; i++)
-            {
-                Gizmos.DrawSphere(_context.GrabPointsRightArm[i].transform.position, 0.1f);
-            }
-            for (int i = 0; i < _context.GrabPointsLeftLeg.Count; i++)
-            {
-                Gizmos.DrawSphere(_context.GrabPointsLeftLeg[i].transform.position, 0.1f);
-            }
-            Gizmos.DrawSphere(_context.FurthestGrabPointFromRightShoulder, 0.3f);
-            Gizmos.DrawSphere(_context.FurthestGrabPointFromRightHip, 0.3f);
+    //    if (_context.FurthestGrabPointFromRightShoulder != null)
+    //    {
+    //        for (int i = 0; i < _context.GrabPointsRightArm.Count; i++)
+    //        {
+    //            Gizmos.DrawSphere(_context.GrabPointsRightArm[i].transform.position, 0.1f);
+    //        }
+    //        for (int i = 0; i < _context.GrabPointsLeftLeg.Count; i++)
+    //        {
+    //            Gizmos.DrawSphere(_context.GrabPointsLeftLeg[i].transform.position, 0.1f);
+    //        }
+    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromRightShoulder, 0.3f);
+    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromRightHip, 0.3f);
 
-        }
-        Gizmos.color = Color.green;
-        if (_context.OriginalLeftShoulder != null)
-        {
-            Gizmos.DrawSphere(_context.OriginalLeftShoulder, 0.3f);
-            Gizmos.DrawSphere(_context.OriginalLeftHip, 0.3f);
-            Gizmos.DrawSphere(_context.OriginalRightShoulder, 0.3f);
-            Gizmos.DrawSphere(_context.OriginalRightHip, 0.3f);
+    //    }
+    //    Gizmos.color = Color.green;
+    //    if (_context.OriginalLeftShoulder != null)
+    //    {
+    //        Gizmos.DrawSphere(_context.OriginalLeftShoulder, 0.3f);
+    //        Gizmos.DrawSphere(_context.OriginalLeftHip, 0.3f);
+    //        Gizmos.DrawSphere(_context.OriginalRightShoulder, 0.3f);
+    //        Gizmos.DrawSphere(_context.OriginalRightHip, 0.3f);
 
-        }
+    //    }
 
-    }
+    //}
 
     private void Awake()
     {

@@ -17,7 +17,7 @@ public class FallDamage : MonoBehaviour
     private Animator _animator;
     private float _lastVelocityBeforeImpact = 0f;
     private bool _canTakeDamage = true;
-
+    public System.Action OnCriticalFallDamage; // Event for critical fall damage
     private void Start()
     {
         _thirdPersonController = GetComponent<ThirdPersonController>();
@@ -74,6 +74,7 @@ public class FallDamage : MonoBehaviour
             {
                 DisableAnimator();
                 Debug.LogWarning($"CRITICAL FALL DAMAGE: {fallDamage:F2}. Animator disabled!");
+                OnCriticalFallDamage?.Invoke(); // Trigger the event
             }
         }
     }

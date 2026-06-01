@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
+    path: Assets/Scenes/StartScreenSpecialLevel.unity
+    guid: 8561327eab396f34a8822b55b9f7d1d9
+  - enabled: 1
     path: Assets/Scenes/EntryIntoCastle.unity
     guid: 58d6096c67279924ca59fb185a8b4c9f
   - enabled: 1

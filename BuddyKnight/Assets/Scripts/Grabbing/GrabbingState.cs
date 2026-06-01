@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.UI;
 using UnityEngine;
 
 public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingState>
@@ -9,7 +8,9 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
 
     // Track active coroutines so they don't stack
     private Coroutine ikSequenceRoutine;
-
+    // Track previous root position/rotation for anchoring still limbs
+    private Vector3 _prevRootPos;
+    private Quaternion _prevRootRot;
     public GrabbingState(
         GrabbingContext context,
         GrabbingStateMachine.EGrabbingState stateKey)
@@ -156,22 +157,20 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         }
 
         // --- Assign moving vs still limbs ---
-        Transform movingArm, movingLeg, stillArm, stillLeg;
+        Transform movingArm, movingLeg;
 
         if (bodySide == RigCollisionHandler.BodySide.LeftArm)
         {
             movingArm = leftArmTransform;
             movingLeg = rightLegTransform;
-            stillArm = rightArmTransform;
-            stillLeg = leftLegTransform;
+          
             Debug.Log("Setting left arm and right leg to move");
         }
         else
         {
             movingArm = rightArmTransform;
             movingLeg = leftLegTransform;
-            stillArm = leftArmTransform;
-            stillLeg = rightLegTransform;
+        
             Debug.Log("Setting right arm and left leg to move");
         }
 
@@ -190,10 +189,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         Vector3 prevRootPos = root.position;
         Quaternion prevRootRot = root.rotation;
 
-        Vector3 stillArmWorldPos = stillArm.position;
-        Quaternion stillArmWorldRot = stillArm.rotation;
-        Vector3 stillLegWorldPos = stillLeg.position;
-        Quaternion stillLegWorldRot = stillLeg.rotation;
+   
 
         // --- Move loop ---
         float elapsedTime = 0f;
@@ -210,24 +206,7 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
             movingArm.position = Vector3.Lerp(startArm, destinationArm, smoothT);
             movingLeg.position = Vector3.Lerp(startLeg, destinationLeg, smoothT);
 
-            // --- Compensate still limbs for root movement ---
-            // If the character moved or rotated this frame, offset the anchored
-            // world positions by the same delta so they stay planted.
-            Vector3 rootPosDelta = root.position - prevRootPos;
-            Quaternion rootRotDelta = root.rotation * Quaternion.Inverse(prevRootRot);
-
-            stillArmWorldPos = rootRotDelta * (stillArmWorldPos - prevRootPos) + root.position + rootPosDelta * 0f;
-            stillLegWorldPos = rootRotDelta * (stillLegWorldPos - prevRootPos) + root.position + rootPosDelta * 0f;
-
-            // Simpler version — use this if you only translate (no root rotation):
-            // stillArmWorldPos += rootPosDelta;
-            // stillLegWorldPos += rootPosDelta;
-
-            stillArm.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
-            stillLeg.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
-
-            prevRootPos = root.position;
-            prevRootRot = root.rotation;
+           
 
             yield return null;
         }
@@ -236,11 +215,43 @@ public abstract class GrabbingState : BaseState<GrabbingStateMachine.EGrabbingSt
         movingArm.position = destinationArm;
         movingLeg.position = destinationLeg;
 
-        // Re-anchor still limbs one final time
-        stillArm.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
-        stillLeg.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
+       
     }
+    protected void KeepStillLimbsInPlace(Vector3 stillArmWorldPos,
+    Quaternion stillArmWorldRot,
+    Vector3 stillLegWorldPos,
+    Quaternion stillLegWorldRot, RigCollisionHandler.BodySide bodySide)
+    {
+        
+        Transform root = Context.CharacterController.transform; // adjust if your root is a different reference
+        
+        // --- Compensate still limbs for root movement ---
+        // If the character moved or rotated this frame, offset the anchored
+        // world positions by the same delta so they stay planted.
+        Vector3 rootPosDelta = root.position - _prevRootPos;
+        Quaternion rootRotDelta = root.rotation * Quaternion.Inverse(_prevRootRot);
 
+        stillArmWorldPos = rootRotDelta * (stillArmWorldPos - _prevRootPos) + root.position + rootPosDelta * 0f;
+        stillLegWorldPos = rootRotDelta * (stillLegWorldPos - _prevRootPos) + root.position + rootPosDelta * 0f;
+
+        // Simpler version — use this if you only translate (no root rotation):
+        // stillArmWorldPos += rootPosDelta;
+        // stillLegWorldPos += rootPosDelta;
+        if(bodySide == RigCollisionHandler.BodySide.LeftArm)
+        {
+            Context.RightIkConstraint.data.target.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
+            Context.LeftLegIkConstraint.data.target.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
+        }
+        else
+        {
+            Context.LeftIkConstraint.data.target.SetPositionAndRotation(stillArmWorldPos, stillArmWorldRot);
+            Context.RightLegIkConstraint.data.target.SetPositionAndRotation(stillLegWorldPos, stillLegWorldRot);
+        }
+        // Update tracking variables for next frame
+        _prevRootPos = root.position;
+        _prevRootRot = root.rotation;
+
+    }
     private IEnumerator MoveLimbsSequentially(RigCollisionHandler.BodySide limb, float speed)
     {
        

@@ -17,11 +17,15 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     }
 
     private GrabbingContext _context;
-    
+
     public Dictionary<string, GameObject> CurrentlyGrabbing => _context.CurrentlyGrabbing;
+    public List<GameObject> GrabPointsLeftArm => _context.GrabPointsLeftArm;
+    public List<GameObject> GrabPointsRightArm => _context.GrabPointsRightArm;
+    public List<GameObject> GrabPointsLeftLeg => _context.GrabPointsLeftLeg;
+    public List<GameObject> GrabPointsRightLeg => _context.GrabPointsRightLeg;
 
     [SerializeField] private TwoBoneIKConstraint _leftIkConstraint;
-   [SerializeField] private TwoBoneIKConstraint _rightIkConstraint;
+    [SerializeField] private TwoBoneIKConstraint _rightIkConstraint;
     [SerializeField] private MultiRotationConstraint _leftMultiRotConstraint;
     [SerializeField] private MultiRotationConstraint _rightMultiRotConstraint;
     [SerializeField] private CharacterController _characterController;
@@ -30,70 +34,28 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     [SerializeField] private ChainIKConstraint _rightIkConstraintChain;
     [SerializeField] public float _reachDistance = 2f;
 
-   
-
-    //private void OnDrawGizmosSelected()
-    //{
-    //    Gizmos.color = Color.blue;
-    //    if (_context.FurthestGrabPointFromLeftShoulder != null)
-    //    {
-    //        for(int i = 0; i < _context.GrabPointsLeftArm.Count; i++)
-    //        {
-    //            Gizmos.DrawSphere(_context.GrabPointsLeftArm[i].transform.position, 0.1f);
-    //        }
-    //        for (int i = 0; i < _context.GrabPointsRightLeg.Count; i++)
-    //        {
-    //            Gizmos.DrawSphere(_context.GrabPointsRightLeg[i].transform.position, 0.1f);
-    //        }
-
-    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftShoulder, 0.3f);
-    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromLeftHip, 0.3f);
-    //        Debug.Log("LeftShoulder: " + _context.FurthestGrabPointFromLeftShoulder);
-    //    }
-    //    Gizmos.color = Color.red;
-       
-    //    if (_context.FurthestGrabPointFromRightShoulder != null)
-    //    {
-    //        for (int i = 0; i < _context.GrabPointsRightArm.Count; i++)
-    //        {
-    //            Gizmos.DrawSphere(_context.GrabPointsRightArm[i].transform.position, 0.1f);
-    //        }
-    //        for (int i = 0; i < _context.GrabPointsLeftLeg.Count; i++)
-    //        {
-    //            Gizmos.DrawSphere(_context.GrabPointsLeftLeg[i].transform.position, 0.1f);
-    //        }
-    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromRightShoulder, 0.3f);
-    //        Gizmos.DrawSphere(_context.FurthestGrabPointFromRightHip, 0.3f);
-
-    //    }
-    //    Gizmos.color = Color.green;
-    //    if (_context.OriginalLeftShoulder != null)
-    //    {
-    //        Gizmos.DrawSphere(_context.OriginalLeftShoulder, 0.3f);
-    //        Gizmos.DrawSphere(_context.OriginalLeftHip, 0.3f);
-    //        Gizmos.DrawSphere(_context.OriginalRightShoulder, 0.3f);
-    //        Gizmos.DrawSphere(_context.OriginalRightHip, 0.3f);
-
-    //    }
-
-    //}
-
     private void Awake()
     {
-        
-        ValidateConstraints();
-        _context = new GrabbingContext(_leftIkConstraintChain, _rightIkConstraintChain, _leftIkConstraint,_rightIkConstraint, _leftMultiRotConstraint, _rightMultiRotConstraint,
-            _characterController, _thirdPersonController, transform.root);
-        //_context.CurrentlyGrabbing["RightLeg"] = new GameObject();
-      //  _context.Normal = GetPlaneNormal();
-        InitializeStates();
-       _context.Owner = this;
-       _context.StateMachine = this;
-       _context.SetOriginalLimbPositions();
 
+        ValidateConstraints();
+        _context = new GrabbingContext(_leftIkConstraintChain, _rightIkConstraintChain, _leftIkConstraint, _rightIkConstraint, _leftMultiRotConstraint, _rightMultiRotConstraint,
+            _characterController, _thirdPersonController, transform.root);
+        InitializeStates();
+        _context.Owner = this;
+        _context.StateMachine = this;
+        _context.SetOriginalLimbPositions();
+        RigCollisionHandler.NewPointEntered += _context.OnPointEntered;
+        RigCollisionHandler.NewPointExited += _context.OnPointExited;
     }
 
     
+
+    private void OnDisable()
+    {
+        // Unsubscribe from collision events when the state machine is disabled
+        RigCollisionHandler.NewPointEntered -= _context.OnPointEntered;
+        RigCollisionHandler.NewPointExited -= _context.OnPointExited;
+    }
 
     private void ValidateConstraints()
     {
@@ -102,7 +64,7 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         Assert.IsNotNull(_leftMultiRotConstraint, "Left multi rotation constraint is not assigned.");
         Assert.IsNotNull(_rightMultiRotConstraint, "right multi rotation constraint is not assigned.");
         Assert.IsNotNull(_characterController, "Character controller is not assigned.");
-        
+
     }
 
     private void InitializeStates()
@@ -115,9 +77,21 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         States.Add(EGrabbingState.Reset, new ResetState(_context, EGrabbingState.Reset));
         CurrentState = States[EGrabbingState.Reset];
     }
+    private void OnDestroy()
+    {
+        // Clean up any resources or references if needed
+        // Unsubscribe from collision events when the state machine is disabled
+        RigCollisionHandler.NewPointEntered -= _context.OnPointEntered;
+        RigCollisionHandler.NewPointExited -= _context.OnPointExited;
+    }
     public Vector3 GetPlaneNormal()
     {
         return _context.GetPlaneNormal();
+    }
+
+    public Vector3 GetCenter()
+    {
+        return _context.GetCenter();
     }
 
     public Coroutine RunCoroutine(IEnumerator routine)
@@ -132,5 +106,4 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
             StopCoroutine(routine);
         }
     }
-
 }

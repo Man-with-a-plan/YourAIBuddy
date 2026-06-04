@@ -10,7 +10,7 @@ public class RightHandGrabState : GrabbingState
     Quaternion stillLegWorldRot;
     public RightHandGrabState(GrabbingContext context, GrabbingStateMachine.EGrabbingState eGrabbingState) : base(context, eGrabbingState)
     {
-        //GrabbingContext Context = context;
+        
     }
     public override void EnterState()
     {

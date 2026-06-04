@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using System.Linq;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
@@ -19,7 +20,7 @@ namespace StarterAssets
 #endif
     public class ThirdPersonController : MonoBehaviour
     {
-        
+
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
         public float MoveSpeed = 2.0f;
@@ -33,7 +34,7 @@ namespace StarterAssets
 
         [Tooltip("Acceleration and deceleration")]
         public float SpeedChangeRate = 10.0f;
-      
+
         public AudioClip LandingAudioClip;
         public AudioClip[] FootstepAudioClips;
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
@@ -85,7 +86,7 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
-        [SerializeField]  GrabbingStateMachine ContextOfLimbPositions;
+        [SerializeField] GrabbingStateMachine ContextOfLimbPositions;
 
         // cinemachine
         private float _cinemachineTargetYaw;
@@ -98,7 +99,8 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
-        
+        private Vector3 _ladderJumpVelocity = Vector3.zero;
+
         private Vector3 lastGrabLadderDirection;
 
         // timeout deltatime
@@ -126,8 +128,9 @@ namespace StarterAssets
         public bool isClimbingLadder;
 
         private bool _hasAnimator;
-      private  Vector3 toCenter = new Vector3();
+        private Vector3 toCenter = new Vector3();
         private Vector3 planeNormal = new Vector3();
+
         private bool IsCurrentDeviceMouse
         {
             get
@@ -153,7 +156,7 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -194,6 +197,7 @@ namespace StarterAssets
             _animIDClimbing = Animator.StringToHash("Climbing");
             _animIDFellDown = Animator.StringToHash("FellDown");
         }
+
         private Collider[] GetObjectsInGroundCheckSphere()
         {
             // Calculate sphere position with offset
@@ -208,6 +212,7 @@ namespace StarterAssets
 
             return collidersInSphere;
         }
+
         private void GroundedCheck()
         {
             if (!isClimbingLadder)
@@ -244,9 +249,8 @@ namespace StarterAssets
                     _animator.SetBool(_animIDGrounded, true);
                 }
             }
-
         }
-       
+
         private void CameraRotation()
         {
             // if there is an input and camera position is not fixed
@@ -278,78 +282,21 @@ namespace StarterAssets
             if (CanClimb == true)
             {
                 isClimbingLadder = true;
-              
-
                 _animator.SetBool(_animIDClimbing, isClimbingLadder);
-                
             }
-                
         }
 
         private void DropLadder()
         {
             isClimbingLadder = false;
-         
             _animator.SetBool(_animIDClimbing, isClimbingLadder);
         }
-        private Vector3 GetCenterVector()
-        {
-            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
-            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
-            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
-            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
-
-            // Calculate the centroid of all four limbs
-            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
-
-          //  Debug.Log(centerPoint.y - transform.position.y);
-
-            // Return direction from character to center
-            return ((centerPoint) - (transform.position + transform.up)).normalized;
-        }
-        private Vector3 GetCenter()
-        {
-            Vector3 leftHandPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftHand"].transform.position;
-            Vector3 rightHandPos = ContextOfLimbPositions.CurrentlyGrabbing["RightHand"].transform.position;
-            Vector3 leftLegPos = ContextOfLimbPositions.CurrentlyGrabbing["LeftLeg"].transform.position;
-            Vector3 rightLegPos = ContextOfLimbPositions.CurrentlyGrabbing["RightLeg"].transform.position;
-
-            // Calculate the centroid of all four limbs
-            Vector3 centerPoint = (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
-            if (leftHandPos.x < rightHandPos.x)
-            {
-                Debug.Log("Left hand is to the right of the right hand. Check your limb assignments.");
-            }
-            //  Debug.Log(centerPoint.y - transform.position.y);
-
-            // Return direction from character to center
-            return centerPoint;
-        }
-
-   
-        //private void OnDrawGizmos()
-        //{
-        //    if (ContextOfLimbPositions == null || ContextOfLimbPositions.CurrentlyGrabbing.Count < 4)
-        //        return;
-
-           
-        //    // Draw center point
-        //    Gizmos.color = Color.magenta;
-        //    Gizmos.DrawSphere(GetCenter(), 0.1f);
-            
-        //    // Draw normal vector
-        //    Gizmos.color = Color.cyan;
-
-        //    Gizmos.DrawLine(GetCenter(), GetCenter() + ContextOfLimbPositions.GetPlaneNormal());
-
-        //}
 
         private void Move()
         {
-
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
-        
+
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
@@ -385,27 +332,22 @@ namespace StarterAssets
             // normalise input direction
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
-
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             Debug.DrawRay(transform.position + Vector3.up, targetDirection * .4f, Color.red);
 
             //Code for attatching to a ladder. No IK. 
             if (Input.GetKeyDown(KeyCode.E) & ContextOfLimbPositions.GetPlaneNormal() != Vector3.zero)
-            { 
+            {
                 //Drop ladder if the player reached the top
                 GrabLadder();
-            }  
-
+            }
 
             //Change moveset if is climbing
-
-                if (isClimbingLadder)
-                {
+            if (isClimbingLadder)
+            {
                 float avoidFloor = 0.1f;
                 float ladderGrabDist = 1f;
-               
-                
 
                 if (!Physics.Raycast(transform.position + Vector3.up, transform.forward, out RaycastHit raycastHit, ladderGrabDist))
                 {
@@ -417,83 +359,105 @@ namespace StarterAssets
                 }
                 else
                 {
+                    Debug.Log(raycastHit.transform.gameObject.name + "is in front");
+                    if (raycastHit.transform.gameObject.name == "Plane.002")
+                    {
+                        if (raycastHit.transform.GetComponent<TemperatureEmission>().isHot)
+                        {
+                            DropLadder();
+                            Debug.Log("drop too hot ayayay");
+                        }
+                        
+                       
+                    }
                     Debug.DrawLine(transform.position + transform.up, raycastHit.point, Color.yellow, 10);
-
                 }
 
-                 
                 //Reach the ground - drop the ladder
-
                 if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
                 {
                     float ladderFloorDropDist = .1f;
-                   
+
                     if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit floorRaycastHit, ladderFloorDropDist))
                     {
                         DropLadder();
                         Debug.Log("dropLadder");
                     }
                 }
+
                 //Drop the ladder if too hot
                 if (CanClimb == false)
                 {
                     DropLadder();
                     Debug.Log("too hot to climb");
                 }
-                    _verticalVelocity = 0f;
-                    Grounded = true;
-                _speed = targetSpeed/2f;
-                Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
-                Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
-                Vector3 sideways = Vector3.Cross(transform.up, planeNormal).normalized;
-                Vector3 move = sideways * _input.move.x
-                             + Vector3.up * _input.move.y;
 
-                move = Vector3.ProjectOnPlane(move, planeNormal);
-                _controller.Move(move.normalized * (_speed * Time.deltaTime));
-                Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.green, 2);
+                _verticalVelocity = 0f;
+                Grounded = true;
+                _speed = targetSpeed / 2f;
+
                 if (ContextOfLimbPositions.GetPlaneNormal() != planeNormal)
                 {
-                    // Smoothly snap to wall
-                    float desiredDistance = 0.3f;
-                    Vector3 targetPosition = GetCenter() - planeNormal * desiredDistance;
-                    targetPosition = targetPosition - transform.up * 1.5f;
-                    //   targetPosition.y = transform.position.y;
-                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 8f);
-                    // Debug.Log("snapping to wall");
-                    Debug.DrawRay(targetPosition, Vector3.up, Color.green, 3);
+                    Debug.Log("snapping to wall");
                     // Smothly rotate to align with the new plane normal
                     planeNormal = ContextOfLimbPositions.GetPlaneNormal();
                     transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(planeNormal, Vector3.ProjectOnPlane(Vector3.up, planeNormal)), Time.deltaTime * 8f);
                 }
-              
+                else
+                {
+                    Vector3 upAlongPlane = Vector3.Cross(planeNormal, transform.right).normalized;
+                    Vector3 tangentDirection = Vector3.Cross(planeNormal, upAlongPlane).normalized;
+                    Vector3 sideways = Vector3.Cross(transform.up, planeNormal).normalized;
+                    Vector3 move = sideways * _input.move.x + Vector3.up * _input.move.y;
 
+                    Debug.DrawRay(transform.position + Vector3.up, move * .4f, Color.black, 2);
+                    move = Vector3.ProjectOnPlane(move, planeNormal);
+                    Debug.Log("moving on ladder");
+
+                    // Smoothly snap to wall
+                    float desiredDistance = 0.3f;
+                    Vector3 targetPosition = ContextOfLimbPositions.GetCenter() - planeNormal * desiredDistance;
+                    targetPosition = targetPosition - transform.up * 1.5f;
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 2f);
+                    _controller.Move(move.normalized * (_speed * Time.deltaTime));
+                }
             }
             else
-            { // move the player
-                _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            {
+                // move the player
+                Vector3 movement = targetDirection.normalized * (_speed * Time.deltaTime) +
+                                   new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
+
+                // Apply ladder jump momentum if character just jumped off ladder
+                if (_ladderJumpVelocity.sqrMagnitude > 0.01f)
+                {
+                    movement += _ladderJumpVelocity * Time.deltaTime;
+                    _ladderJumpVelocity *= 0.95f; // Decay momentum over time
+                }
+
+                _controller.Move(movement);
             }
+
             // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is a move input rotate player when the player is moving
 
             // Rotate the player if not climbing the ladder
             if (_input.move != Vector2.zero & !isClimbingLadder)
-                    {
-                    _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                      _mainCamera.transform.eulerAngles.y;
-                    float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                        RotationSmoothTime);
-                    // rotate to face input direction relative to camera position
-                    transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-                }
+            {
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+                                  _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+                    RotationSmoothTime);
+                // rotate to face input direction relative to camera position
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
+
             // update animator if using character
             if (_hasAnimator)
-                {
-                    _animator.SetFloat(_animIDSpeed, _animationBlend);
-                    _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-                }
-            
+            {
+                _animator.SetFloat(_animIDSpeed, _animationBlend);
+                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+            }
         }
 
         private void JumpAndGravity()
@@ -516,25 +480,32 @@ namespace StarterAssets
                     _verticalVelocity = -2f;
                 }
 
-                // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
                     Debug.Log("Jumping");
-                    //Jump from one ladder to another
-                    if (isClimbingLadder == true) {
-                        //_verticalVelocity = _verticalVelocity * 2;
-                        isClimbingLadder = false;
-                        _animator.SetBool(_animIDClimbing, false);
-                    }
-                    
 
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 
+                    // Jump from one ladder to another
+                    if (isClimbingLadder == true)
+                    {
+                        isClimbingLadder = false;
+                        _animator.SetBool(_animIDClimbing, false);
+
+                        // Turn around 180 degrees when jumping off ladder
+                        float newRotation = transform.eulerAngles.y + 180f;
+                        transform.rotation = Quaternion.Euler(0.0f, newRotation, 0.0f);
+                        _targetRotation = newRotation;
+
+                        // Add forward momentum in the direction character is facing
+                        Vector3 jumpDirection = transform.forward;
+                        _ladderJumpVelocity = jumpDirection * MoveSpeed;
+                    }
+
                     // update animator if using character
                     if (_hasAnimator)
                     {
-
                         _animator.SetBool(_animIDJump, true);
                     }
                 }
@@ -542,7 +513,6 @@ namespace StarterAssets
                 // jump timeout
                 if (_jumpTimeoutDelta >= 0.0f)
                 {
-
                     _jumpTimeoutDelta -= Time.deltaTime;
                 }
             }
@@ -581,20 +551,6 @@ namespace StarterAssets
             if (lfAngle < -360f) lfAngle += 360f;
             if (lfAngle > 360f) lfAngle -= 360f;
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
-            Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
-
-            if (Grounded) Gizmos.color = transparentGreen;
-            else Gizmos.color = transparentRed;
-
-            // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
-            Gizmos.DrawSphere(
-                new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
-                GroundedRadius);
         }
 
         private void OnFootstep(AnimationEvent animationEvent)

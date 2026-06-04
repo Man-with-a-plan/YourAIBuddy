@@ -12,14 +12,12 @@ public class ApproachState:GrabbingState
     }
     public override void EnterState()
     {
-        RigCollisionHandler.NewPointEntered += AddGrabbablePoints;
-        RigCollisionHandler.NewPointExited += DeleteGrabbablePoints;
+       
  
         Debug.Log("ApproachStateEntered");
     }
     public override void ExitState() {
-        //RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
-        //RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
+       
         Debug.Log("ApproachStateExited"); 
     }
     public override void UpdateState()

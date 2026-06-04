@@ -126,13 +126,13 @@ public class GameManager : MonoBehaviour
         {
             case 1:
             case 2:
+
             case 3:
-            case 4:
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
                 break;
 
-            case 5:
-               
+            case 4:
+
                 sfc.clip = sfx;
                 sfc.Play();
                 StartCoroutine(EndGameRoutine());  // ← coroutine instead of async Task

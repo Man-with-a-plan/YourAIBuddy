@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Dungeon.unity
     guid: fbdb05d23b078ab4db67307dccc7de45
   - enabled: 1
+    path: Assets/Scenes/DungeonWithHotBodyParts.unity
+    guid: de20d6811cbbebd488c00511557ed952
+  - enabled: 1
     path: Assets/Scenes/MainRoom.unity
     guid: 5b1c20c8ce07d084cb62b437622dcbb4
   m_configObjects:

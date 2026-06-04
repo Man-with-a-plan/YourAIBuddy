@@ -6,18 +6,14 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
-public class GrabbingContext 
+public class GrabbingContext
 {
- 
-
-
-
-  private TwoBoneIKConstraint _leftIkConstraint;
-  private TwoBoneIKConstraint _rightIkConstraint;
-  private MultiRotationConstraint _leftMultiRotConstraint;
-  private MultiRotationConstraint _rightMultiRotConstraint;
-  private CharacterController _characterController;
-    private ThirdPersonController _thirdPersonController;   
+    private TwoBoneIKConstraint _leftIkConstraint;
+    private TwoBoneIKConstraint _rightIkConstraint;
+    private MultiRotationConstraint _leftMultiRotConstraint;
+    private MultiRotationConstraint _rightMultiRotConstraint;
+    private CharacterController _characterController;
+    private ThirdPersonController _thirdPersonController;
     private Transform _rootTransform;
     private ChainIKConstraint _leftIkConstraintChain;
     private ChainIKConstraint _rightIkConstraintChain;
@@ -38,7 +34,7 @@ public class GrabbingContext
         _thirdPersonController = thirdPersonController;
     }
 
-    public  ChainIKConstraint LeftIkConstraint => _leftIkConstraintChain;
+    public ChainIKConstraint LeftIkConstraint => _leftIkConstraintChain;
     public ChainIKConstraint RightIkConstraint => _rightIkConstraintChain;
     public TwoBoneIKConstraint LeftLegIkConstraint => _leftIkConstraint;
     public TwoBoneIKConstraint RightLegIkConstraint => _rightIkConstraint;
@@ -52,63 +48,104 @@ public class GrabbingContext
     public ChainIKConstraint CurrentIkConstraint;
     public MultiRotationConstraint CurrentMultiRotationConstraint;
 
-   
-   
     public Transform CurrentIkTargetTransform { get; private set; }
     public Transform CurrentShoulderTransform { get; private set; }
- 
-    
+
     public List<GameObject> GrabPointsLeftLeg { get; private set; } = new List<GameObject>();
     public List<GameObject> GrabPointsRightLeg { get; private set; } = new List<GameObject>();
     public List<GameObject> GrabPointsRightArm { get; private set; } = new List<GameObject>();
     public List<GameObject> GrabPointsLeftArm { get; private set; } = new List<GameObject>();
-    //List of game objects that character is currently grabbing. Later will be used to defy his rotation in ThirdPersonController
+
     public Dictionary<string, GameObject> CurrentlyGrabbing = new Dictionary<string, GameObject>();
 
-
-    //to debug which grab point is being grabbed
     public Vector3 FurthestGrabPointFromLeftShoulder { get; private set; }
-    public Vector3 FurthestGrabPointFromRightShoulder { get; private set; } 
-    public Vector3 FurthestGrabPointFromLeftHip { get; private set; } 
+    public Vector3 FurthestGrabPointFromRightShoulder { get; private set; }
+    public Vector3 FurthestGrabPointFromLeftHip { get; private set; }
     public Vector3 FurthestGrabPointFromRightHip { get; private set; }
     public Vector3 OriginalLeftShoulder { get; private set; }
     public Vector3 OriginalRightShoulder { get; private set; }
     public Vector3 OriginalLeftHip { get; private set; }
     public Vector3 OriginalRightHip { get; private set; }
 
-    //To optimise can change to Vector3
     protected GameObject leftHandGrab, rightHandGrab;
     public Vector3 Normal;
 
     public MonoBehaviour Owner;
     public GrabbingStateMachine StateMachine;
-  
+
+    /// <summary>
+    /// Called when a grab point enters a limb's trigger collider
+    /// </summary>
+    public void OnPointEntered(GameObject grabbable, RigCollisionHandler.BodySide limb)
+    {
+        switch (limb)
+        {
+            case RigCollisionHandler.BodySide.RightArm:
+                if (!GrabPointsRightArm.Contains(grabbable))
+                    GrabPointsRightArm.Add(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftArm:
+                if (!GrabPointsLeftArm.Contains(grabbable))
+                    GrabPointsLeftArm.Add(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.RightLeg:
+                if (!GrabPointsRightLeg.Contains(grabbable))
+                    GrabPointsRightLeg.Add(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftLeg:
+                if (!GrabPointsLeftLeg.Contains(grabbable))
+                    GrabPointsLeftLeg.Add(grabbable);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Called when a grab point exits a limb's trigger collider
+    /// </summary>
+    public void OnPointExited(GameObject grabbable, RigCollisionHandler.BodySide limb)
+    {
+        switch (limb)
+        {
+            case RigCollisionHandler.BodySide.RightArm:
+                GrabPointsRightArm.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftArm:
+                GrabPointsLeftArm.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.RightLeg:
+                GrabPointsRightLeg.Remove(grabbable);
+                break;
+            case RigCollisionHandler.BodySide.LeftLeg:
+                GrabPointsLeftLeg.Remove(grabbable);
+                break;
+        }
+    }
+
     public void SetClosestPoint(List<GameObject> ListOfClosestGrabPoints, RigCollisionHandler.BodySide limb)
     {
-        
+        // Clean up the list BEFORE processing
+        ListCleanup(ListOfClosestGrabPoints);
+
         if (ListOfClosestGrabPoints.Count > 0)
         {
-           
             Vector3 Center = RightIkConstraint.data.root.transform.position;
-        
+
             float longestLeftDistance = Vector3.Distance(Center, ListOfClosestGrabPoints[0].transform.position);
             leftHandGrab = ListOfClosestGrabPoints[0];
-        
 
             float distanceToCheck = float.MaxValue;
-
-        
 
             for (int i = 0; i < ListOfClosestGrabPoints.Count; i++)
             {
                 distanceToCheck = Vector3.Distance(Center, ListOfClosestGrabPoints[i].transform.position);
-                if (distanceToCheck > longestLeftDistance )
+                if (distanceToCheck > longestLeftDistance)
                 {
+                    longestLeftDistance = distanceToCheck;
                     leftHandGrab = ListOfClosestGrabPoints[i];
                 }
             }
-            //to indicate which is the closest to the left hand
-            switch(limb)
+
+            switch (limb)
             {
                 case RigCollisionHandler.BodySide.LeftArm:
                     FurthestGrabPointFromLeftShoulder = leftHandGrab.transform.position;
@@ -131,11 +168,7 @@ public class GrabbingContext
                     Debug.Log("Left leg grab point: " + FurthestGrabPointFromLeftHip);
                     break;
             }
-
-            
-
         }
-
         else
         {
             Debug.Log("No grab points in range for " + limb);
@@ -160,38 +193,25 @@ public class GrabbingContext
                     break;
             }
         }
-
-        ListCleanup(ListOfClosestGrabPoints);
     }
-    
-    void ListCleanup(List<GameObject> ListToClean)
+
+    private void ListCleanup(List<GameObject> ListToClean)
     {
-
         float maxDistance = _characterController.height / 1.5f;
-
-        // Get the character controller's global position
         Vector3 controllerPosition = _characterController.transform.position;
-
-        // Calculate the center in world space (accounting for local offset)
         Vector3 center = controllerPosition + _characterController.center;
-    
-       
-        Debug.Log("Center: " + center);
-        Debug.DrawLine(center, center + Vector3.up * 2f, Color.green, 5f); // Visualize the center point
-        for (int i = 0; i < ListToClean.Count; i++)
+
+        for (int i = ListToClean.Count - 1; i >= 0; i--)
         {
             float distanceToGrabPoint = Vector3.Distance(center, ListToClean[i].transform.position);
-         
+
             if (distanceToGrabPoint > maxDistance)
             {
-                Debug.Log("distance" + distanceToGrabPoint);
-                Debug.Log("distance Grab point: " + ListToClean[i].transform.position);
+                Debug.Log("Grab point too far: distance " + distanceToGrabPoint + " > max " + maxDistance);
                 ListToClean.RemoveAt(i);
-                i--;
             }
         }
     }
-
 
     public Vector3 GetPlaneNormal()
     {
@@ -201,25 +221,64 @@ public class GrabbingContext
             Vector3 rightHandPos = CurrentlyGrabbing["RightHand"].transform.position;
             Vector3 leftLegPos = CurrentlyGrabbing["LeftLeg"].transform.position;
             Vector3 rightLegPos = CurrentlyGrabbing["RightLeg"].transform.position;
+            Vector3 betweenArms = (rightHandPos + leftHandPos) / 2;
 
-            
+            Vector3 edge1 = rightLegPos - betweenArms;
+            Vector3 edge2 = leftLegPos - betweenArms;
 
-            // Create two edge vectors from the limb positions
-            Vector3 edge1 = rightLegPos - leftHandPos;  // Vector from left hand to right leg
-            Vector3 edge2 = leftLegPos - leftHandPos;    // Vector from left hand to left leg
-
-            // Calculate the normal vector using cross product
             Vector3 normalVector = Vector3.Cross(edge2, edge1).normalized;
 
             return normalVector;
         }
         catch (System.Exception e)
         {
-           // Debug.LogError("Not all limbs are grabbing. Cannot calculate plane normal: " + e.Message);
-            return Vector3.zero; // Return a default value or handle as needed
+            return Vector3.zero;
         }
-
     }
+
+    public Vector3 GetCenter()
+    {
+        bool hasLeftHand = TryGetGrabPosition("LeftHand", out Vector3 leftHandPos);
+        bool hasRightHand = TryGetGrabPosition("RightHand", out Vector3 rightHandPos);
+        bool hasLeftLeg = TryGetGrabPosition("LeftLeg", out Vector3 leftLegPos);
+        bool hasRightLeg = TryGetGrabPosition("RightLeg", out Vector3 rightLegPos);
+
+        // Diagonals span the body, so their midpoint is the best center estimate.
+        bool diagA = hasLeftHand && hasRightLeg;   // left hand <-> right leg
+        bool diagB = hasRightHand && hasLeftLeg;   // right hand <-> left leg
+
+        // Both diagonals present == averaging all four limbs.
+        if (diagA && diagB)
+            return (leftHandPos + rightHandPos + leftLegPos + rightLegPos) / 4f;
+
+        // One limb dropped: use whichever opposite pair is still complete.
+        if (diagA) return (leftHandPos + rightLegPos) / 2f;
+        if (diagB) return (rightHandPos + leftLegPos) / 2f;
+
+        // No complete diagonal: average whatever limbs remain.
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        if (hasLeftHand) { sum += leftHandPos; count++; }
+        if (hasRightHand) { sum += rightHandPos; count++; }
+        if (hasLeftLeg) { sum += leftLegPos; count++; }
+        if (hasRightLeg) { sum += rightLegPos; count++; }
+        if (count > 0) return sum / count;
+
+        // Nothing connected at all — fall back so callers never get garbage.
+        Debug.LogWarning("GetCenter: no grab points connected, returning transform.position");
+        return RootTransform.position;
+    }
+
+    private bool TryGetGrabPosition(string limb, out Vector3 position)
+    {
+        position = Vector3.zero;
+        if (CurrentlyGrabbing == null) return false;
+        if (!CurrentlyGrabbing.TryGetValue(limb, out var grab)) return false;
+        if (grab == null) return false;          // Unity == covers destroyed objects too
+        position = grab.transform.position;
+        return true;
+    }
+
     public void SetOriginalLimbPositions()
     {
         OriginalLeftShoulder = LeftIkConstraint.data.target.transform.localPosition;
@@ -227,7 +286,8 @@ public class GrabbingContext
         OriginalLeftHip = LeftLegIkConstraint.data.target.transform.localPosition;
         OriginalRightHip = RightLegIkConstraint.data.target.transform.localPosition;
         Debug.Log("Grab points are set to original positions.");
-    }   
+    }
+
     public void ResetGrabPoints()
     {
         LeftIkConstraint.data.target.transform.localPosition = OriginalLeftShoulder;
@@ -235,7 +295,5 @@ public class GrabbingContext
         LeftLegIkConstraint.data.target.transform.localPosition = OriginalLeftHip;
         RightLegIkConstraint.data.target.transform.localPosition = OriginalRightHip;
         CurrentlyGrabbing.Clear();
-       
     }
-
 }

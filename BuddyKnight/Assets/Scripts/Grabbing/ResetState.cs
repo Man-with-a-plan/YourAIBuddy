@@ -12,8 +12,7 @@ public class ResetState : GrabbingState
 
     public override void EnterState()
     {
-        RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
-        RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
+      
         _elapsedTime = 0;
         Debug.Log("ResetIsentered");
 

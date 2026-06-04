@@ -13,14 +13,11 @@ public class SearchState:GrabbingState
     {
         Debug.Log("SearchIsentered");
      
-        RigCollisionHandler.NewPointEntered += AddGrabbablePoints;
-        RigCollisionHandler.NewPointExited += DeleteGrabbablePoints;
     }
 
     public override void ExitState()
     {
-        RigCollisionHandler.NewPointEntered -= AddGrabbablePoints;
-        RigCollisionHandler.NewPointExited -= DeleteGrabbablePoints;
+      
         Debug.Log("SearchIsExited");
     }
     public override void UpdateState()

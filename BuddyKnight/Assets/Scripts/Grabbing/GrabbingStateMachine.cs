@@ -33,7 +33,9 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
     [SerializeField] private ChainIKConstraint _leftIkConstraintChain;
     [SerializeField] private ChainIKConstraint _rightIkConstraintChain;
     [SerializeField] public float _reachDistance = 2f;
-
+    [Header("Gizmo Visualization")]
+    [SerializeField] private bool _showGrabPointGizmos = true;
+    [SerializeField] private float _gizmoSphereRadius = 0.1f;
     private void Awake()
     {
 
@@ -105,5 +107,90 @@ public class GrabbingStateMachine : StateManager<GrabbingStateMachine.EGrabbingS
         {
             StopCoroutine(routine);
         }
+    }
+    private void OnDrawGizmosSelected()
+    {
+        if (!_showGrabPointGizmos || _context == null)
+            return;
+
+        // Left Arm - Light Blue
+        DrawGrabPointList(GrabPointsLeftArm, new Color(0.5f, 0.8f, 1f, 0.7f), "LeftHand");
+
+        // Right Arm - Light Green
+        DrawGrabPointList(GrabPointsRightArm, new Color(0.5f, 1f, 0.5f, 0.7f), "RightHand");
+
+        // Left Leg - Light Orange
+        DrawGrabPointList(GrabPointsLeftLeg, new Color(1f, 0.8f, 0.5f, 0.7f), "LeftLeg");
+
+        // Right Leg - Light Pink/Magenta
+        DrawGrabPointList(GrabPointsRightLeg, new Color(1f, 0.5f, 0.8f, 0.7f), "RightLeg");
+
+        // Draw currently grabbing points with larger spheres and lines to labels
+        DrawCurrentlyGrabbingPoints();
+    }
+
+    private void DrawGrabPointList(List<GameObject> grabPoints, Color color, string limbName)
+    {
+        if (grabPoints == null || grabPoints.Count == 0)
+            return;
+
+        Gizmos.color = color;
+
+        foreach (GameObject point in grabPoints)
+        {
+            if (point == null) continue;
+
+            // Draw sphere for available grab point
+            Gizmos.DrawSphere(point.transform.position, _gizmoSphereRadius);
+        }
+    }
+
+    private void DrawCurrentlyGrabbingPoints()
+    {
+        if (CurrentlyGrabbing == null || CurrentlyGrabbing.Count == 0)
+            return;
+
+        // Define colors for each limb
+        Dictionary<string, Color> limbColors = new Dictionary<string, Color>()
+        {
+            { "LeftHand", new Color(0.2f, 0.6f, 1f, 1f) },      // Bright Blue
+            { "RightHand", new Color(0.2f, 1f, 0.2f, 1f) },     // Bright Green
+            { "LeftLeg", new Color(1f, 0.6f, 0.2f, 1f) },       // Bright Orange
+            { "RightLeg", new Color(1f, 0.2f, 0.8f, 1f) }       // Bright Magenta
+        };
+
+        foreach (var kvp in CurrentlyGrabbing)
+        {
+            string limbName = kvp.Key;
+            GameObject grabPoint = kvp.Value;
+
+            if (grabPoint == null) continue;
+
+            Color limbColor = limbColors.ContainsKey(limbName) ? limbColors[limbName] : Color.white;
+
+            // Draw larger sphere for grabbed point
+            Gizmos.color = limbColor;
+            Gizmos.DrawSphere(grabPoint.transform.position, _gizmoSphereRadius * 1.5f);
+
+            // Draw a wire cube around it to make it more visible
+            Gizmos.color = limbColor;
+            Gizmos.DrawWireCube(grabPoint.transform.position, Vector3.one * _gizmoSphereRadius);
+
+            // Draw line from grab point to center
+            Vector3 center = _context.GetCenter();
+            Gizmos.color = limbColor;
+            Gizmos.DrawLine(grabPoint.transform.position, center);
+
+            // Draw label offset (visual indicator)
+            Vector3 labelOffset = grabPoint.transform.position + Vector3.up * 0.2f;
+            Gizmos.color = limbColor;
+            Gizmos.DrawSphere(labelOffset, _gizmoSphereRadius * 0.5f);
+        }
+
+        // Draw the center point
+        Gizmos.color = Color.yellow;
+        Vector3 centerPos = _context.GetCenter();
+        Gizmos.DrawSphere(centerPos, _gizmoSphereRadius * 2f);
+        Gizmos.DrawWireCube(centerPos, Vector3.one * _gizmoSphereRadius * 2f);
     }
 }

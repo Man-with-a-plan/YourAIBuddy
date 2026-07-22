@@ -125,7 +125,7 @@ public class GrabbingContext
     {
         // Clean up the list BEFORE processing
         ListCleanup(ListOfClosestGrabPoints);
-
+        Debug.Log("Checking " + ListOfClosestGrabPoints.Count + " grab points for " + limb);
         if (ListOfClosestGrabPoints.Count > 0)
         {
             Vector3 Center = RightIkConstraint.data.root.transform.position;
@@ -207,7 +207,7 @@ public class GrabbingContext
 
             if (distanceToGrabPoint > maxDistance)
             {
-                Debug.Log("Grab point too far: distance " + distanceToGrabPoint + " > max " + maxDistance);
+                Debug.Log("Grab point too far: distance " + distanceToGrabPoint + " > max " + maxDistance + " | Remaining points: " + ListToClean.Count);
                 ListToClean.RemoveAt(i);
             }
         }
